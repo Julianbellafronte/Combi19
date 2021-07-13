@@ -1,0 +1,76 @@
+﻿@page "/choferes"
+@inject IServicioChofer servicioChofer
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+@attribute [Authorize(Roles = "Admin")]
+<div style="background: linear-gradient(#ffb73f, #ffd23f) " class="top-row px-1 auth border-0 position-relative">
+    <h1 style="color:white">Choferes del sistema</h1>
+</div>
+
+@if (choferes == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="modal-content">
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td colspan="2"><button type="button" class="btn btn-outline-info" @onclick="@(() => navigationManager.NavigateTo("/añadirChofer"))">Agregar chofer</button></td>
+                </tr>
+            </tbody>
+
+        </table>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Chofer</th>
+                    <th>Dni</th>
+                    <th></th>
+                    <th></th>
+
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var chofer in choferes)
+                {
+                    <tr>
+                        <td><a href="/perfilChofer/@chofer.IdAux"> @chofer.Nombre @chofer.Apellido </a></td>
+                        <td> @chofer.Dni</td>
+                        <td></td>
+                        <td>
+                            <button type="button" class="btn btn-outline-info" @onclick="@(() => navigationManager.NavigateTo($"/editarChofer/{chofer.IdAux}"))">Editar</button>
+                            <button type="submit" class="btn btn-outline-danger" @onclick="@(() => navigationManager.NavigateTo($"/eliminarChofer/{chofer.IdAux}"))">Eliminar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+
+    public IEnumerable<AspNetUsersDto> choferes { get; set; }
+    public string Message { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            choferes = await servicioChofer.ObtenerTodos();
+        }
+        catch (Exception ex)
+        {
+            Message = "Algo salio mal... " + ex.Message;
+        }
+    }
+
+    protected void irA(string link, int id)
+    {
+        navigationManager.NavigateTo(link + id.ToString());
+    }
+}

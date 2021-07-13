@@ -1,0 +1,48 @@
+﻿@page "/perfilInsumo/{id:int}"
+@inject IServicioInsumo servicioInsumo
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+<h1>@insumo.Nombre </h1>
+<div class="modal-content">
+    <table class="table">
+        <tr>
+            <td><b>Nombre:</b> @insumo.Nombre</td>
+        </tr>
+        <tr>
+            <td><b>Codigo:</b> @insumo.Codigo</td>
+        </tr>
+        <tr>
+            <td><b>Descripcion:</b> @insumo.Descripcion</td>
+        </tr>
+        <tr>
+            <td><b>Precio:</b> @insumo.Precio</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align:center">
+                <button type="button" class="btn btn-outline-dark" @onclick="Volver">Volver</button>
+            </td>
+        </tr>
+    </table>
+</div>
+
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    Insumo insumo = new Insumo();
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (id > 0) //If no Id has been passed, then it is a new Category
+        {
+            insumo = await servicioInsumo.Obtener(id);
+        }
+    }
+
+    public void Volver()
+    {
+        navigationManager.NavigateTo("/insumos");
+    }
+}

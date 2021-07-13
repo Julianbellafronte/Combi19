@@ -1,0 +1,104 @@
+﻿@page "/registrarUsuario"
+@using Microsoft.AspNetCore.Identity
+@inject IServicioUsuario servicioUsuario
+@inject NavigationManager navigationManager
+@inject UserManager<AspNetUsers> UserManager
+
+<div tabindex="-1" style="display:block" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Registrar usuario</h1>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@Usuario" OnInvalidSubmit="Guardar">
+                    <DataAnnotationsValidator />
+                    <table class="table">
+                        <tr>
+                            <td>Nombre</td>
+                            <td><input type="text" @bind="Usuario.Nombre" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => Usuario.Nombre)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Apellido</td>
+                            <td><input type="text" @bind="Usuario.Apellido" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => Usuario.Apellido)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Email</td>
+                            <td><input type="email" @bind="Usuario.Email" /><h6 style="color:red">@Message</h6></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => Usuario.Email)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Clave</td>
+                            <td><input type="password" required pattern="^(?=.*[A-Z])(?=.*[0-9]).{6,}$" oninvalid="this.setCustomValidity('Debe contener al menos 6 caracteres entre ellos una mayuscula y un digito')" oninput="this.setCustomValidity('')" @bind="Usuario.Clave"/></td>
+                        </tr>
+                        <tr>
+                            <td>DNI</td>
+                            <td><input type="text" pattern="[0-9]{7,8}" @bind="Usuario.Dni" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => Usuario.Dni)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Fecha de nacimiento</td>
+                            <td><input type="date" min="@menor" max="@mayor" title="Debe ser mayor de 18 años para poder registrarse" @bind="Usuario.FechaNacimiento" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => Usuario.FechaNacimiento)" /></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="text-align:center">
+                                <button type="submit" class="btn btn-outline-primary" value="Guardar">Guardar</button>
+                                <button type="button" class="btn btn-outline-primary" @onclick="@(( ) => navigationManager.NavigateTo("/"))">Cancelar</button>
+                            </td>
+                        </tr>
+                    </table>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    AspNetUsersDto Usuario { get; set; } = new AspNetUsersDto();
+    AspNetUsers choferNuevo = new AspNetUsers();
+    IEnumerable<AspNetUsersDto> choferes = new List<AspNetUsersDto>();
+    string Message, email;
+    string fechaHoy = DateTime.Today.ToString("yyyy-MM");
+    string set = DateTime.Today.AddDays(31).ToString("yyyy-MM");
+    string mayor = DateTime.Today.AddYears(-18).ToString("yyyy-MM-dd");
+    string menor = DateTime.Today.AddYears(-100).ToString("yyyy-MM-dd");
+
+    public async Task Guardar()
+    {
+        AspNetUsersDto c = await servicioUsuario.ExisteEmail(Usuario.Email);
+        if (c == null)
+        {
+            await registrar();
+            navigationManager.NavigateTo($"/proximosDestinos");
+        }
+        else
+        {
+            Message = "El email ya se encuentra registrado";
+        }
+
+    }
+
+    protected async Task registrar()
+    {
+        var user = new AspNetUsers
+        {
+            UserName = Usuario.Email,
+            Email = Usuario.Email,
+            Nombre = Usuario.Nombre,
+            Apellido = Usuario.Apellido,
+            Dni = Usuario.Dni,
+            FechaNacimiento = Usuario.FechaNacimiento,
+            PlanPremium = false
+        };
+        var result = await UserManager.CreateAsync(user, Usuario.Clave);
+        if (result.Succeeded)
+        {
+            result = await UserManager.AddToRoleAsync(user, "Normal");
+        }
+    }
+
+}

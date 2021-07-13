@@ -1,0 +1,86 @@
+﻿@page "/añadirComentario"
+@page "/editarComentario/{id:int}"
+@inject IServicioComentario servicioComentario
+@inject IServicioVenta servicioVenta
+@inject IServicioUsuario servicioUsuario
+@inject NavigationManager navigationManager
+@inject AuthenticationStateProvider auth
+@attribute [Authorize(Roles = "Normal")]
+
+
+<AuthorizeView Roles="Normal">
+    <Authorized Context="Auth">
+        @if (misViajes == null)
+        {
+            <p>Loading...</p>
+        }
+        else if (misViajes.Count() > 0)
+        {
+            <EditForm Model="@comentario" OnValidSubmit="Guardar">
+                <div style="background-color:white" class="p-2 mt-2 rounded">
+                    <div class="d-flex flex-row align-items-start">
+                        <img class="rounded-circle" src="/PJ.jpg" width="55">
+                        <textarea class="form-control ml-1 shadow-none textarea" required @bind="@comentario.Contenido" placeholder="Compartí tu opinión"></textarea>
+                    </div>
+                    <div class="mt-2 text-right">
+                        <button class="btn btn-primary border-0" type="submit" style="background-color: #005473">Comentar</button>
+                        <button class="btn btn-primary border-0" type="button" style="background-color: #005473">Cancelar</button>
+                    </div>
+                </div>
+            </EditForm>
+        }
+    </Authorized>
+</AuthorizeView>
+
+
+
+@code {
+    public Comentario comentario { get; set; } = new Comentario();
+    [Parameter]
+    public int id { get; set; } = 0;
+    public IEnumerable<Venta> misViajes { get; set; }
+    IEnumerable<Comentario> comentarios = new List<Comentario>();
+    string Message;
+    AspNetUsersDto creador = new AspNetUsersDto();
+    string name;
+
+    protected async override Task OnInitializedAsync()
+    {
+        AuthenticationState astate = await auth.GetAuthenticationStateAsync();
+        name = astate.User.Identity.Name;
+        creador = await servicioUsuario.Obtener(name);
+        if (creador !=null)
+        {
+            misViajes = await servicioVenta.ObtenerTodos(creador.IdAux);
+        }
+        if (id > 0) //If no Id has been passed, then it is a new Category
+        {
+            comentario = await servicioComentario.Obtener(id);
+        }
+    }
+
+    public async Task Guardar()
+    {
+
+        comentario.IdCreador = creador.IdAux;
+        comentario.NombreCreador = creador.Nombre + " " + creador.Apellido;
+        await servicioComentario.Guardar(comentario);
+        if (id == 0)
+            navigationManager.NavigateTo("/", true);
+        else
+            navigationManager.NavigateTo("/misComentarios");
+
+    }
+
+
+    public void Cancelar()
+    {
+        comentario.Contenido = "";
+        if (id == 0)
+            navigationManager.NavigateTo("/", true);
+        else
+            navigationManager.NavigateTo("/misComentarios", true);
+    }
+
+
+}

@@ -1,0 +1,121 @@
+﻿@page "/añadirCiudad"
+@page "/editarCiudad/{id:int}"
+@inject IServicioProvincia servicioProvincia
+@inject IServicioCiudad servicioCiudad
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div tabindex="-1" style="display:block" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Datos de ciudad</h1>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@ciudad" OnValidSubmit="Guardar">
+                    <DataAnnotationsValidator />
+                    <table class="table">
+                        <tr>
+                            <td>Nombre</td>
+                            <td><input type="text" @bind="ciudad.Nombre" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => ciudad.Nombre)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Codigo Postal</td>
+                            <td><input type="text" @bind="ciudad.CodigoPostal" /> <h6><text style="color:red">@Message</text></h6></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => ciudad.CodigoPostal)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Provincia</td>
+                            <td>
+                                <InputSelect class="form-control col-sm-10" @bind-Value="@ciudad.IdProvincia">
+                                    <option value="">Seleccione una provincia</option>
+                                    @foreach (Provincia item in provincias)
+                                    {
+                                        <option value="@item.Id">@item.Nombre </option>
+                                    }
+                                </InputSelect>
+                            </td>
+                            <td colspan="2"> <ValidationMessage For="@( () => ciudad.IdProvincia)" /></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="text-align:center">
+                                <button type="submit" class="btn btn-outline-primary" value="Guardar">Guardar</button>
+                                <button type="button" class="btn btn-outline-secondary" @onclick="Cancelar">Cancelar</button>
+                            </td>
+                        </tr>
+                    </table>
+                </EditForm>
+                <div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+    private IEnumerable<Provincia> provincias = new List<Provincia>();
+    private IEnumerable<Ciudad> ciudades = new List<Ciudad>();
+    Ciudad ciudad = new Ciudad();
+    string codigoOriginal = "";
+    public string Message { get; set; } = "";
+
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            provincias = await servicioProvincia.ObtenerTodos();
+            ciudades = await servicioCiudad.ObtenerTodos();
+        }
+        catch (Exception ex)
+        {
+            Message = "Algo salio mal... " + ex.Message;
+        }
+
+        if (id > 0) //If no Id has been passed, then it is a new Category
+        {
+            ciudad = await servicioCiudad.Obtener(id);
+            codigoOriginal = ciudad.CodigoPostal;
+        }
+    }
+
+    public bool existe(string codigo)
+    {
+        foreach (Ciudad ciudad in ciudades)
+        {
+            if (ciudad.CodigoPostal.ToUpper() == codigo.ToUpper())
+                return true;
+        }
+        return false;
+    }
+
+    public async Task Guardar()
+    {
+
+        if (codigoOriginal.ToUpper() == ciudad.CodigoPostal.ToUpper() || !existe(ciudad.CodigoPostal))
+        {
+            await servicioCiudad.Guardar(ciudad);
+            if (ciudad.Id == 0)
+                navigationManager.NavigateTo("/ciudades");
+            else
+            {
+                navigationManager.NavigateTo($"/perfiLCiudad/{ciudad.Id}");
+            }
+        }
+        else
+        {
+            Message = "La ciudad ya existe";
+            navigationManager.NavigateTo($"/editarCiudad/{id}");
+        }
+
+    }
+
+    public void Cancelar()
+    {
+        navigationManager.NavigateTo("/ciudades");
+    }
+}
+

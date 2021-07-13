@@ -1,0 +1,158 @@
+﻿@page "/ViajeEnCurso"
+@inject AuthenticationStateProvider auth
+@inject IServicioViaje servicioViaje
+@inject IServicioUsuario servicioUsuario
+@inject IServicioRuta servicioRuta
+@inject IJSRuntime JSRuntime
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Chofer")]
+
+@if (viaje == null )
+{
+<div class="container px-1 px-md-4 py-5 mx-auto">
+    <div class="card">
+        <div class="row d-flex justify-content-between px-3 top">
+            <div class="d-flex">
+                <h5> <span class="text-primary font-weight-bold"> No hay viajes en curso momentaneamente </span></h5>
+            </div>
+        </div> <!-- Add class 'active' to progress -->
+        <div class="row d-flex justify-content-center">
+            <div class="col-12">
+                <ul id="progressbar" class="text-center">
+                    <li class=" step0"></li>
+                    <li class="step0"></li>
+                    <li class=" step0"></li>
+                    <li class="step0"></li>
+                </ul>
+            </div>
+        </div>
+        <div class="row justify-content-between top">
+            <div class="row d-flex icon-content">
+                <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" fill="currentColor" class="bi bi-shield-plus" viewBox="0 0 16 16">
+                    <path d="M5.338 1.59a61.44 61.44 0 0 0-2.837.856.481.481 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.725 10.725 0 0 0 2.287 2.233c.346.244.652.42.893.533.12.057.218.095.293.118a.55.55 0 0 0 .101.025.615.615 0 0 0 .1-.025c.076-.023.174-.061.294-.118.24-.113.547-.29.893-.533a10.726 10.726 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z" />
+                    <path d="M8 4.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V9a.5.5 0 0 1-1 0V7.5H6a.5.5 0 0 1 0-1h1.5V5a.5.5 0 0 1 .5-.5z" />
+                </svg>
+                <div class="d-flex flex-column">
+                    <p class="font-weight-bold">Pasajeros<br>Testeados</p>
+                </div>
+            </div>
+            <div class="row d-flex icon-content">
+                <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                    <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z" />
+                </svg>
+                <div class="d-flex flex-column">
+                    <p class="font-weight-bold">Viaje<br>Iniciado</p>
+                </div>
+            </div>
+            <div class="row d-flex icon-content">
+                <img class="icon" src="https://i.imgur.com/TkPm63y.png">
+                <div class="d-flex flex-column">
+                    <p class="font-weight-bold">Viaje<br>En Curso</p>
+                </div>
+            </div>
+            <div class="row d-flex icon-content">
+                <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" fill="currentColor" class="bi bi-pin-map-fill" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M3.1 11.2a.5.5 0 0 1 .4-.2H6a.5.5 0 0 1 0 1H3.75L1.5 15h13l-2.25-3H10a.5.5 0 0 1 0-1h2.5a.5.5 0 0 1 .4.2l3 4a.5.5 0 0 1-.4.8H.5a.5.5 0 0 1-.4-.8l3-4z" />
+                    <path fill-rule="evenodd" d="M4 4a4 4 0 1 1 4.5 3.969V13.5a.5.5 0 0 1-1 0V7.97A4 4 0 0 1 4 3.999z" />
+                </svg>
+                <div class="d-flex flex-column">
+                    <p class="font-weight-bold">Viaje<br>Finalizado</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+}
+else
+{
+
+    <div class="container px-1 px-md-4 py-5 mx-auto">
+        <div class="card">
+            <div class="row d-flex justify-content-between px-3 top">
+                <div class="d-flex">
+                    <h5>Ruta <span class="text-primary font-weight-bold"> <Combi19.Ui.Pages.Componentes.ComponenteTitulo IdViaje="viaje.Id"></Combi19.Ui.Pages.Componentes.ComponenteTitulo> </span></h5>
+                </div>
+                <div class="d-flex flex-column text-sm-right">
+                    <p class="mb-0"> Fecha de Salida <span>@viaje.FechaSalida.ToString("dd/MM/yyyy")</span></p>
+                    <p>Km <span class="font-weight-bold">@ruta.Km</span></p>
+                </div>
+            </div> <!-- Add class 'active' to progress -->
+            <div class="row d-flex justify-content-center">
+                <div class="col-12">
+                    <ul id="progressbar" class="text-center">
+                        <li class="active step0"></li>
+                        <li class="active step0"></li>
+                        <li class="active step0"></li>
+                        <li class="step0"></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row justify-content-between top">
+                <div class="row d-flex icon-content">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" fill="currentColor" class="bi bi-shield-plus" viewBox="0 0 16 16">
+                        <path d="M5.338 1.59a61.44 61.44 0 0 0-2.837.856.481.481 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.725 10.725 0 0 0 2.287 2.233c.346.244.652.42.893.533.12.057.218.095.293.118a.55.55 0 0 0 .101.025.615.615 0 0 0 .1-.025c.076-.023.174-.061.294-.118.24-.113.547-.29.893-.533a10.726 10.726 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z" />
+                        <path d="M8 4.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V9a.5.5 0 0 1-1 0V7.5H6a.5.5 0 0 1 0-1h1.5V5a.5.5 0 0 1 .5-.5z" />
+                    </svg>
+                    <div class="d-flex flex-column">
+                        <p class="font-weight-bold">Pasajeros<br>Testeados</p>
+                    </div>
+                </div>
+                <div class="row d-flex icon-content">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                        <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z" />
+                    </svg>
+                    <div class="d-flex flex-column">
+                        <p class="font-weight-bold">Viaje<br>Iniciado</p>
+                    </div>
+                </div>
+                <div class="row d-flex icon-content">
+                    <img class="icon" src="https://i.imgur.com/TkPm63y.png">
+                    <div class="d-flex flex-column">
+                        <p class="font-weight-bold">Viaje<br>En Curso</p>
+                    </div>
+                </div>
+                <div class="row d-flex icon-content">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" fill="currentColor" class="bi bi-pin-map-fill" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M3.1 11.2a.5.5 0 0 1 .4-.2H6a.5.5 0 0 1 0 1H3.75L1.5 15h13l-2.25-3H10a.5.5 0 0 1 0-1h2.5a.5.5 0 0 1 .4.2l3 4a.5.5 0 0 1-.4.8H.5a.5.5 0 0 1-.4-.8l3-4z" />
+                        <path fill-rule="evenodd" d="M4 4a4 4 0 1 1 4.5 3.969V13.5a.5.5 0 0 1-1 0V7.97A4 4 0 0 1 4 3.999z" />
+                    </svg>
+                    <div class="d-flex flex-column">
+                        <p class="font-weight-bold">Viaje<br>Finalizado</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: center">
+        <button class="btn btn-primary border-0" type="button" style="background-color: #005473; margin:15px" @onclick="Finalizar">Finalizar</button>
+    </div>
+}
+
+@code {
+    Viaje viaje;
+    AspNetUsersDto user = new AspNetUsersDto();
+    Ruta ruta;
+
+    protected async override Task OnInitializedAsync()
+    {
+        AuthenticationState astate = await auth.GetAuthenticationStateAsync();
+        string name = astate.User.Identity.Name;
+        user = await servicioUsuario.Obtener(name);
+        viaje = await servicioViaje.ViajeEnCurso(user.IdAux);
+        if(viaje != null)
+            ruta = await servicioRuta.Obtener(viaje.IdRuta);
+    }
+
+    public async Task Finalizar()
+    {
+        if (await JSRuntime.Confirm("Confirmar", "¿Esta seguro que desea finalizar el viaje?", IJSExtensions.TipoMensajeSweetAlert.question))
+        {
+            viaje.Estado = "Finalizado";
+            await servicioViaje.Guardar(viaje);
+            navigationManager.NavigateTo("/misViajes", true);
+        }
+    }
+}

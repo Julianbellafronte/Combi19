@@ -1,0 +1,48 @@
+﻿<div tabindex="-1" style="display:block" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Datos de la Tarjeta</h1>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@Tarjeta">
+                    <DataAnnotationsValidator />
+                    <table class="table">
+                        <tr>
+                            <td>Numero de tarjeta</td>
+                            <td>
+                                <input type="text" requiered pattern="[0-9]{16}" class="form-control col-sm-9" @bind="@Tarjeta.NumeroTarjeta"/>
+                            </td>
+                            <td colspan="2"> <ValidationMessage For="@( () => Tarjeta.NumeroTarjeta)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Nombre en la tarjeta</td>
+                            <td>
+                                <input type="text" required class="form-control col-sm-9" @bind="@Tarjeta.NombreTarjeta"/>
+                            </td>
+                            <td colspan="2"> <ValidationMessage For="@( () => Tarjeta.NombreTarjeta)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Vencimiento</td>
+                            <td>
+                                <input type="month" required min="@DateTime.Today.ToString("yyyy-MM")" class="form-control col-sm-2" @bind="@Tarjeta.Vencimiento" />
+                            </td>
+                            <td colspan="2"> <ValidationMessage For="@( () => Tarjeta.Vencimiento)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Codigo de seguridad</td>
+                            <td>
+                                <input type="text" required pattern="[0-9]{3}" class="form-control col-sm-2" @bind="@Tarjeta.CodigoSeguridad" />
+                            </td>
+                            <td colspan="2"> <ValidationMessage For="@( () => Tarjeta.CodigoSeguridad)" /></td>
+                        </tr>
+                    </table>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+@code {
+    [Parameter] public Tarjeta Tarjeta { get; set; }
+
+}

@@ -1,0 +1,88 @@
+﻿@page "/ciudades"
+@inject IServicioCiudad servicioCiudad
+@inject IServicioProvincia servicioProvincia
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+@attribute [Authorize(Roles = "Admin")]
+<div style="background: linear-gradient(#ffb73f, #ffd23f) " class="top-row px-1 auth border-0 position-relative">
+    <h1 style="color:white">Ciudades del sistema</h1>
+</div>
+
+@if (ciudades == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="modal-content">
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td colspan="2"><button type="button" class="btn btn-outline-info" @onclick="@(() => navigationManager.NavigateTo($"/añadirCiudad"))">Agregar ciudad</button></td>
+                </tr>
+            </tbody>
+
+        </table>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Codigo Postal</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ciudad in ciudades)
+                {
+                    <tr>
+                        <td><a href="/perfilCiudad/@ciudad.Id"> @ciudad.Nombre, @ObtenerProvincia(ciudad.IdProvincia).Nombre</a></td>
+                        <td>@ciudad.CodigoPostal</td>
+                        <td></td>
+                        <td>
+                            <button type="button" class="btn btn-outline-info" @onclick="@(() => navigationManager.NavigateTo($"/editarCiudad/{ciudad.Id}"))">Editar</button>
+                            <button type="submit" class="btn btn-outline-danger" @onclick="@(() => navigationManager.NavigateTo($"/eliminarCiudad/{ciudad.Id}"))">Eliminar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+
+    public IEnumerable<Ciudad> ciudades { get; set; }
+    private IEnumerable<Provincia> provincias = new List<Provincia>();
+    public string Message { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            provincias = await servicioProvincia.ObtenerTodos();
+            ciudades = await servicioCiudad.ObtenerTodos();
+        }
+        catch (Exception ex)
+        {
+            Message = "Algo salio mal... " + ex.Message;
+        }
+    }
+    public Provincia ObtenerProvincia(int id)
+    {
+        Provincia prov = new Provincia();
+        foreach (Provincia p in provincias)
+        {
+            if (p.Id == id)
+            {
+                prov = p;
+                break;
+            }
+        }
+        return prov;
+    }
+
+}
+

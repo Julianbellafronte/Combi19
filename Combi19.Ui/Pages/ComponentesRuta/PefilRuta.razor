@@ -1,0 +1,71 @@
+﻿@page "/perfilRuta/{id:int}"
+@inject IServicioRuta servicioRuta
+@inject IServicioCiudad servicioCiudad
+@inject IServicioProvincia servicioProvincia
+@inject IServicioCombi servicioCombi
+@inject IServicioChofer servicioChofer
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+<h1>Datos de ruta</h1>
+<div class="modal-content">
+    <table class="table">
+        <tr>
+            <td><b>Origen:</b> @ciudad1.Nombre, @p1.Nombre</td>
+        </tr>
+        <tr>
+            <td><b>Destino:</b> @ciudad2.Nombre, @p2.Nombre</td>
+        </tr>
+        <tr>
+            <td><b>Distancia:</b> @ruta.Km.ToString(".00") km</td>
+        </tr>
+        <tr>
+            <td><b>Hora de Salida:</b> @ruta.HsSalida.ToString("HH:mm")</td>
+        </tr>
+        <tr>
+            <td><b>Combi:</b> @combi.Modelo @combi.Patente</td>
+        </tr>
+        <tr>
+            <td><b>Chofer:</b> @chofer.Nombre @chofer.Apellido </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align:center">
+                <button type="button" class="btn btn-outline-dark" @onclick="Volver">Volver</button>
+            </td>
+        </tr>
+    </table>
+</div>
+
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    Ciudad ciudad1 = new Ciudad();
+    Ciudad ciudad2 = new Ciudad();
+    Provincia p1 = new Provincia();
+    Provincia p2 = new Provincia();
+    Combi combi = new Combi();
+    Ruta ruta = new Ruta();
+    AspNetUsersDto chofer = new AspNetUsersDto();
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (id > 0) //If no Id has been passed, then it is a new Category
+        {
+            ruta = await servicioRuta.Obtener(id);
+            ciudad1 = await servicioCiudad.Obtener(ruta.IdCiudad1);
+            ciudad2 = await servicioCiudad.Obtener(ruta.IdCiudad2);
+            p1 = await servicioProvincia.Obtener(ciudad1.IdProvincia);
+            p2 = await servicioProvincia.Obtener(ciudad2.IdProvincia);
+            combi = await servicioCombi.Obtener(ruta.IdCombi);
+            chofer = await servicioChofer.Obtener(combi.IdChofer);
+        }
+    }
+
+    public void Volver()
+    {
+        navigationManager.NavigateTo("/rutas");
+    }
+}
+

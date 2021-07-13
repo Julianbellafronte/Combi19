@@ -1,0 +1,174 @@
+﻿@page "/añadirRuta"
+@page "/editarRuta/{id:int}"
+@inject IServicioRuta servicioRuta
+@inject IServicioCiudad servicioCiudad
+@inject IServicioProvincia servicioProvincia
+@inject IServicioCombi servicioCombi
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div tabindex="-1" style="display:block" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Datos de ruta</h1>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@ruta" OnValidSubmit="Guardar">
+                    <DataAnnotationsValidator />
+                    <table class="table">
+                        <tr>
+                            <td>Origen</td>
+                            <td>
+                                <InputSelect class="form-control col-sm-12" @bind-Value="@ruta.IdCiudad1">
+                                    @if (ciudades.Count() > 0)
+                                    {
+                                        <option value="">Seleccione la ciudad de origen</option>
+                                        @foreach (Ciudad item in ciudades)
+                                        {
+                                            <option value="@item.Id">@item.Nombre</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option disabled>No hay ciudades en el sistema</option>
+                                    }
+                                </InputSelect>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Destino</td>
+                            <td>
+                                <InputSelect class="form-control col-sm-12" @bind-Value="@ruta.IdCiudad2">
+                                    @if (ciudades.Count() > 0)
+                                    {
+                                        <option value="">Seleccione la ciudad de destino</option>
+                                        @foreach (Ciudad item in ciudades)
+                                        {
+                                            if (ruta.IdCiudad1 != item.Id)
+                                            {
+                                                <option value="@item.Id">@item.Nombre </option>
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option disabled>No hay ciudades en el sistema</option>
+                                    }
+                                </InputSelect>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Distancia</td>
+                            <td><input type="number" step="0.01" min="1" @bind="ruta.Km" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => ruta.Km)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Hora de Salida</td>
+                            <td><input type="time" @bind-value="ruta.HsSalida" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => ruta.HsSalida)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Combi</td>
+                            <td>
+                                <InputSelect class="form-control col-sm-9" @bind-Value="@ruta.IdCombi">
+                                    @if (combies.Count() > 0)
+                                    {
+                                        <option value="">Seleccione una combi</option>
+                                        @foreach (Combi item in combies)
+                                        {
+                                            <option value="@item.Id">@item.Modelo @item.Patente </option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option disabled>No hay combis en el sistema</option>
+                                    }
+                                </InputSelect>
+                            </td>
+                            <td colspan="2"> <ValidationMessage For="@( () => ruta.IdCombi)" /></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="text-align:center">
+                                <button type="submit" class="btn btn-outline-primary" value="Guardar">Guardar</button>
+                                <button type="button" class="btn btn-outline-secondary" @onclick="Cancelar">Cancelar</button>
+                            </td>
+                        </tr>
+                        <h6 style="color:red">@Message</h6>
+                    </table>
+                </EditForm>
+                <div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code { [Parameter]
+    public int id { get; set; }
+
+    //string horasalida;
+
+    Ruta ruta = new Ruta();
+    Ciudad c1 = new Ciudad();
+    Ciudad c2 = new Ciudad();
+    DateTime hora = new DateTime();
+    Combi combi = new Combi();
+
+    private IEnumerable<Ciudad> ciudades = new List<Ciudad>();
+    private IEnumerable<Combi> combies = new List<Combi>();
+    private IEnumerable<Ruta> rutas = new List<Ruta>();
+    private Provincia provincia = new Provincia();
+    string Message;
+
+    protected async override Task OnInitializedAsync()
+    {
+        ciudades = await servicioCiudad.ObtenerTodos();
+        combies = await servicioCombi.ObtenerTodos();
+        rutas = await servicioRuta.ObtenerTodos();
+        if (id > 0) //If no Id has been passed, then it is a new Category
+        {
+            ruta = await servicioRuta.Obtener(id);
+            hora = ruta.HsSalida;
+            c1 = await servicioCiudad.Obtener(ruta.IdCiudad1);
+            c2 = await servicioCiudad.Obtener(ruta.IdCiudad2);
+            combi = await servicioCombi.Obtener(ruta.IdCombi);
+
+        }
+    }
+
+    public async Task<bool> existe(int id1, int id2, DateTime hora, int idC)
+    { 
+    Ruta r = await servicioRuta.Obtener(id1, id2, hora, idC);
+   
+        return  r != null;
+    }
+
+    public async Task Guardar()
+    {
+        bool hayRuta = await existe(ruta.IdCiudad1, ruta.IdCiudad2, ruta.HsSalida, ruta.IdCombi);
+        if (combi.Id > 0)
+            combi.Patente = combi.Patente.ToUpper();
+        if (c1.Id == ruta.IdCiudad1 && c2.Id == ruta.IdCiudad2 && combi.Id == ruta.IdCombi && hora.ToString("HH:mm") == ruta.HsSalida.ToString("HH:mm") || !hayRuta)
+        {
+            await servicioRuta.Guardar(ruta);
+            if (ruta.Id == 0)
+                navigationManager.NavigateTo("/rutas");
+            else
+                navigationManager.NavigateTo($"/perfilRuta/{ruta.Id}");
+        }
+        else
+        {
+            Message = "La ruta ya existe";
+            navigationManager.NavigateTo($"/editarRuta/{id}");
+        }
+    }
+
+
+    public void Cancelar()
+    {
+        navigationManager.NavigateTo("/rutas");
+    } }
+
+
+

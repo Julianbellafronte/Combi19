@@ -1,0 +1,118 @@
+﻿@page "/buscarViaje"
+@inject IServicioRuta servicioRuta
+@inject IServicioCiudad servicioCiudad
+@inject IServicioProvincia servicioProvincia
+@inject IServicioViaje servicioViaje
+@inject IServicioCombi servicioCombi
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Normal")]
+
+
+
+<EditForm class="row" Model="@viaje" OnInvalidSubmit="buscarViaje">
+    <DataAnnotationsValidator />
+    <InputSelect style="margin:5px" class="form-control col-sm-3" pattern="[1-9]{1,}" required oninvalid="this.setCustomValidity('Seleccione una ciudad')" oninput="this.setCustomValidity('')" @bind-Value="@viaje.IdCiudadOrigen">
+        <option value="">Origen</option>
+        @foreach (CiudadProvincia item in ciudadesProvincias)
+        {
+            <option value="@item.ciudad.Id">@item.ciudad.Nombre @item.provincia.Nombre</option>
+        }
+    </InputSelect>
+    <InputSelect style="margin:5px" class="form-control col-sm-3" pattern="[1-9]{1,}" required oninvalid="this.setCustomValidity('Seleccione una ciudad')" oninput="this.setCustomValidity('')" @bind-Value="@viaje.IdCiudadDestino">
+        <option value="" >Destino</option>
+        @foreach (CiudadProvincia item in ciudadesProvincias)
+        {
+            if (item.ciudad.Id != viaje.IdCiudadOrigen)
+            {
+                <option value="@item.ciudad.Id">@item.ciudad.Nombre @item.provincia.Nombre</option>
+            }
+        }
+    </InputSelect>
+    <input class=" rounded border-0" style="margin: 5px" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" @bind="viaje.FechaSalida" />
+    <button style="background-color: #005473; margin: 5px" type="submit" class="btn btn-primary border-0" ><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+</svg></button>   
+</EditForm>
+
+
+@code {
+
+    public string Mensaje { get; set; }
+    /*[Parameter] */
+    public ViajeCompleto viaje { get; set; } = new ViajeCompleto();
+    public IEnumerable<Viaje> viajes = new List<Viaje>();
+    /*  [Parameter] */
+    public List<ViajeCompleto> viajesCompletos { get; set; } = new List<ViajeCompleto>();
+    /* [Parameter]*/
+    public List<CiudadProvincia> ciudadesProvincias { get; set; } = new List<CiudadProvincia>();
+    public string Message { get; set; }
+
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            viajes = await servicioViaje.ObtenerTodos();
+            await obtenerCiudadProvincia();
+            await cargarCiudadesProvincias();
+        }
+        catch (Exception ex)
+        {
+            Message = "Algo salio mal... " + ex.Message;
+        }
+    }
+
+    public void buscarViaje()
+    {
+        int dia = viaje.FechaSalida.Day, mes = viaje.FechaSalida.Month, anio = viaje.FechaSalida.Year;
+        navigationManager.NavigateTo($"viajesDisponibles/{viaje.IdCiudadOrigen}/{viaje.IdCiudadDestino}/{dia}/{mes}/{anio}",true);
+    }
+
+    protected async Task obtenerCiudadProvincia() //A partir de un viaje obtengo su ruta, ciudades y sus provincias, y cargo todo en un viajeCompleto
+    {
+        Ciudad ciudad1 = new Ciudad();
+        Ciudad ciudad2 = new Ciudad();
+        Ruta tipoRuta = new Ruta();
+        Provincia tipoProvincia1 = new Provincia();
+        Provincia tipoProvincia2 = new Provincia();
+        Combi combi = new Combi();
+        ViajeCompleto viaje;
+        foreach (Viaje item in viajes)
+        {
+            tipoRuta = await servicioRuta.Obtener(item.IdRuta);
+            ciudad1 = await servicioRuta.ObtenerCiudad(tipoRuta.IdCiudad1);
+            tipoProvincia1 = await servicioCiudad.ObtenerProvincia(ciudad1.IdProvincia);
+
+            ciudad2 = await servicioRuta.ObtenerCiudad(tipoRuta.IdCiudad2);
+            tipoProvincia2 = await servicioCiudad.ObtenerProvincia(ciudad2.IdProvincia);
+
+            combi = await servicioCombi.ObtenerCombiRuta(tipoRuta.Id);
+
+            viaje = new ViajeCompleto(
+                item.Id, ciudad1.Nombre, tipoProvincia1.Nombre, ciudad2.Nombre, tipoProvincia2.Nombre,
+                item.FechaSalida, item.Precio, tipoRuta.HsSalida, tipoRuta.Id, ciudad1.Id, ciudad2.Id, combi, item.Asientos);
+            viajesCompletos.Add(viaje);
+        }
+    }
+
+    protected async Task cargarCiudadesProvincias() //Cargo para cada ciudad su provincia
+    {
+        IEnumerable<Ciudad> ciudades = new List<Ciudad>();
+        Ciudad ciudad = new Ciudad();
+        Provincia tipoProvincia = new Provincia();
+        CiudadProvincia c;
+
+        ciudades = await servicioCiudad.ObtenerTodos();
+
+        foreach (Ciudad item in ciudades)
+        {
+            ciudad = await servicioCiudad.Obtener(item.Id);
+            tipoProvincia = await servicioCiudad.ObtenerProvincia(ciudad.IdProvincia);
+
+            c = new CiudadProvincia(ciudad.Id, ciudad.Nombre, ciudad.IdProvincia, ciudad.CodigoPostal, tipoProvincia.Nombre);
+            ciudadesProvincias.Add(c);
+        }
+    }
+
+
+}

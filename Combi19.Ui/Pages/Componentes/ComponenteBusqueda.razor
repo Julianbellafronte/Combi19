@@ -1,0 +1,107 @@
+﻿@inject IServicioRuta servicioRuta
+@inject IServicioCiudad servicioCiudad
+@inject IServicioProvincia servicioProvincia
+@inject IServicioViaje servicioViaje
+@inject IServicioCombi servicioCombi
+
+<div tabindex="-1" style="display:block" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Datos de ruta</h1>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@viaje" OnValidSubmit="buscarViaje">
+                    <DataAnnotationsValidator />
+                    <table class="table">
+                        <tr>
+                            <td>Ciudad origen</td>
+                            <td>
+                                <InputSelect class="form-control col-sm-9" @bind-Value="@viaje.IdCiudadOrigen">
+                                    <option value="">Seleccione una ciudad</option>
+                                    @foreach (CiudadProvincia item in ciudadesProvincias)
+                                    {
+                                        <option value="@item.ciudad.Id">@item.ciudad.Nombre @item.provincia.Nombre</option>
+                                    }
+                                </InputSelect>
+                            </td>
+                            <td colspan="2"> <ValidationMessage For="@(() => viaje.IdCiudadOrigen)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Ciudad destino</td>
+                            <td>
+                                <InputSelect class="form-control col-sm-9" @bind-Value="@viaje.IdCiudadDestino">
+                                    <option value="">Seleccione una ciudad</option>
+                                    @foreach (CiudadProvincia item in ciudadesProvincias)
+                                    {
+                                        if (item.ciudad.Id != viaje.IdCiudadOrigen)
+                                        {
+                                            <option value="@item.ciudad.Id">@item.ciudad.Nombre @item.provincia.Nombre</option>
+                                        }
+                                    }
+                                </InputSelect>
+                            </td>
+                            <td colspan="2"> <ValidationMessage For="@(() => viaje.IdCiudadDestino)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Fecha</td>
+                            <td><input type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" @bind="viaje.FechaSalida" /></td>
+                            <td colspan="2"> <ValidationMessage For="@(() => viaje.FechaSalida)" /></td>
+                        </tr>
+                        <div style="text-align: center;">
+                            <button type="submit" class="btn btn-outline-info" value="buscarViaje">Buscar</button>
+                            <p style="color:red">@Mensaje</p>
+                        </div>
+                    </table>
+                </EditForm>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public ViajeCompleto viaje { get; set; }
+    public string Mensaje { get; set; }
+    [Parameter] public List<CiudadProvincia> ciudadesProvincias {get;set;}
+    [Parameter] public List<ViajeCompleto> viajesCompletos { get; set; } = new List<ViajeCompleto>();
+
+    public async Task buscarViaje()
+    {
+        Combi combi = new Combi();
+        Ruta tipoRuta = new Ruta();
+        tipoRuta = await servicioRuta.Obtener(viaje.IdCiudadOrigen, viaje.IdCiudadDestino);
+
+        if (tipoRuta != null) //Si existe una ruta
+        {
+            Viaje viajeBusqueda = await servicioViaje.Obtener(tipoRuta.Id, viaje.FechaSalida);
+            if (viajeBusqueda != null)
+            { //Verifico si existe un viaje asignado para la ruta encontrada
+              //Busco para la ciudad de origen y destino el nombre y provincia (Capas se pueda mejorar)
+                Ciudad ciudadOrigen = await servicioRuta.ObtenerCiudad(viaje.IdCiudadOrigen);
+                Provincia provinciaOrigen = await servicioCiudad.ObtenerProvincia(ciudadOrigen.IdProvincia);
+                Ciudad ciudadDestino = await servicioRuta.ObtenerCiudad(viaje.IdCiudadDestino);
+                Provincia provinciaDestino = await servicioCiudad.ObtenerProvincia(ciudadDestino.IdProvincia);
+
+                combi = await servicioCombi.ObtenerCombiRuta(tipoRuta.Id); //Obtengo la combi de la ruta asignada al viaje.
+
+                ViajeCompleto viajeCompletoBusqueda = new ViajeCompleto(
+                 viajeBusqueda.Id, ciudadOrigen.Nombre, provinciaOrigen.Nombre, ciudadDestino.Nombre, provinciaOrigen.Nombre,
+                    viajeBusqueda.FechaSalida, viajeBusqueda.Precio, tipoRuta.HsSalida, tipoRuta.Id, viaje.IdCiudadOrigen,
+                    viaje.IdCiudadDestino, combi, viajeBusqueda.Asientos);
+                viajesCompletos = new List<ViajeCompleto>();
+                viajesCompletos.Add(viajeCompletoBusqueda);
+            }
+            else
+            {
+                Mensaje = "No se encontraron resultados.";
+            }
+        }
+        else
+        {
+            Mensaje = "No se encontraron resultados.";
+        }
+
+    }
+
+}

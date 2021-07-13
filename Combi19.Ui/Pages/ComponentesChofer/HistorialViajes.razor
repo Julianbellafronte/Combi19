@@ -1,0 +1,92 @@
+﻿@page "/misViajes"
+@inject IServicioViaje servicioViaje
+@inject IServicioRuta servicioRuta
+@inject IServicioCiudad servicioCiudad
+@inject IServicioChofer servicioChofer
+@inject AuthenticationStateProvider auth
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Chofer")]
+
+<div style="background: linear-gradient(#ffb73f, #ffd23f) " class="top-row px-1 auth border-0 position-relative">
+    <h1 style="color:white">Historial de viajes</h1>
+</div>
+
+@if (viajes == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="modal-content">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Ruta</th>
+                    <th>Fecha de Salida</th>
+                    <th>Hora de Salida</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (ViajeCompleto item in viajesCompletos)
+                {
+                <tr>
+                    <td><a href="/perfilViaje/@item.IdViaje/@("misViajes")">@item.CiudadOrigen, @item.ProvinciaOrigen  -  @item.CiudadDestino, @item.ProvinciaDestino</a></td>
+                    <td>@item.FechaSalida.Date.ToString("dd/MM/yy")</td>
+                    <td>@item.HsSalida.ToString("HH:mm")</td>
+                    <td>
+                        <button type="button" class="btn btn-outline-info" @onclick="@(() => navigationManager.NavigateTo($"/pasajes/{item.IdViaje}"))">Pasajes</button>
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    public IEnumerable<Viaje> viajes = new List<Viaje>();
+    public List<ViajeCompleto> viajesCompletos = new List<ViajeCompleto>();
+    public string Message { get; set; }
+    AspNetUsersDto creador = new AspNetUsersDto();
+    string name;
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            AuthenticationState astate = await auth.GetAuthenticationStateAsync();
+            name = astate.User.Identity.Name;
+            creador = await servicioChofer.Obtener(name);
+            viajes = await servicioViaje.ViajesChofer(creador.IdAux);
+            await obtenerCiudadProvincia();
+        }
+        catch (Exception ex)
+        {
+            Message = "Algo salio mal... " + ex.Message;
+        }
+    }
+
+    protected async Task obtenerCiudadProvincia()
+    {
+        Ciudad ciudad1 = new Ciudad();
+        Ciudad ciudad2 = new Ciudad();
+        Ruta tipoRuta = new Ruta();
+        Provincia tipoProvincia1 = new Provincia();
+        Provincia tipoProvincia2 = new Provincia();
+        ViajeCompleto viaje;
+        foreach (Viaje item in viajes)
+        {
+            tipoRuta = await servicioRuta.Obtener(item.IdRuta);
+            ciudad1 = await servicioRuta.ObtenerCiudad(tipoRuta.IdCiudad1);
+            tipoProvincia1 = await servicioCiudad.ObtenerProvincia(ciudad1.IdProvincia);
+
+            ciudad2 = await servicioRuta.ObtenerCiudad(tipoRuta.IdCiudad2);
+            tipoProvincia2 = await servicioCiudad.ObtenerProvincia(ciudad2.IdProvincia);
+
+            viaje = new ViajeCompleto(item.Id, ciudad1.Nombre, tipoProvincia1.Nombre, ciudad2.Nombre, tipoProvincia2.Nombre, item.FechaSalida, item.Precio, tipoRuta.HsSalida, item.Asientos);
+            viajesCompletos.Add(viaje);
+        }
+    }
+
+}

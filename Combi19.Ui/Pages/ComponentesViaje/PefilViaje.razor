@@ -1,0 +1,115 @@
+﻿@page "/perfilViaje/{id:int}"
+@page "/perfilViaje/{id:int}/{url}"
+@inject NavigationManager navigationManager
+@inject IServicioRuta servicioRuta
+@inject IServicioCiudad servicioCiudad
+@inject IServicioProvincia servicioProvincia
+@inject IServicioViaje servicioViaje
+
+    <div style="background: linear-gradient(#ffb73f, #ffd23f) " class="top-row px-1 auth border-0 position-relative">
+        <h1 style="color:white"> Datos de viaje</h1>
+    </div>
+<div class="modal-content">
+    <table class="table">
+        <tr>
+            <td><b>Ruta:</b> @ciudad1.Nombre, @tipoProvincia1.Nombre  -  @ciudad2.Nombre, @tipoProvincia2.Nombre </td>
+        </tr>
+        <tr>
+            <td><b>Fecha de salida:</b> @viaje.FechaSalida.ToString("dd/MM/yy")</td>
+        </tr>
+        <tr>
+            <td><b>Hora de salida:</b> @tipoRuta.HsSalida.ToString("HH:mm")</td>
+        </tr>
+        <tr>
+            <td><b>Precio de viaje:</b> @viaje.Precio</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align:center">
+                <button type="button" class="btn btn-outline-dark" @onclick="Volver">Volver</button>
+            </td>
+        </tr>
+    </table>
+</div>
+
+@code { [Parameter]
+    public int id { get; set; }
+    [Parameter]
+    public string url { get; set; } = "";
+    Viaje viaje = new Viaje();
+    public string Message { get; set; }
+
+    public IEnumerable<Ruta> rutas = new List<Ruta>();
+    private IEnumerable<Ciudad> ciudades = new List<Ciudad>();
+    private IEnumerable<Provincia> provincias = new List<Provincia>();
+    Ciudad ciudad1 = new Ciudad();
+    Ciudad ciudad2 = new Ciudad();
+    Ruta tipoRuta = new Ruta();
+    Provincia tipoProvincia1 = new Provincia();
+    Provincia tipoProvincia2 = new Provincia();
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            ciudades = await servicioCiudad.ObtenerTodos();
+            provincias = await servicioProvincia.ObtenerTodos();
+            rutas = await servicioRuta.ObtenerTodos();
+            viaje = await servicioViaje.Obtener(id);
+            obtenerCiudadProvincia(viaje.IdRuta);
+        }
+        catch (Exception ex)
+        {
+            Message = "Algo salio mal... " + ex.Message;
+        }
+    }
+
+    protected void obtenerCiudadProvincia(int v1)
+    {
+        foreach (Ruta ruta in rutas)
+        {
+            if (ruta.Id == v1)
+            {
+                tipoRuta = ruta;
+                break;
+            }
+        }
+        foreach (Ciudad ciudad in ciudades)
+        {
+            if (ciudad.Id == tipoRuta.IdCiudad1)
+            {
+                ciudad1 = ciudad;
+                foreach (Provincia provincia in provincias)
+                {
+                    if (provincia.Id == ciudad.IdProvincia)
+                    {
+                        tipoProvincia1 = provincia;
+                        break;
+                    }
+                }
+            }
+        }
+        foreach (Ciudad ciudad in ciudades)
+        {
+            if (ciudad.Id == tipoRuta.IdCiudad2)
+            {
+                ciudad2 = ciudad;
+                foreach (Provincia provincia in provincias)
+                {
+                    if (provincia.Id == ciudad.IdProvincia)
+                    {
+                        tipoProvincia2 = provincia;
+                        break;
+                    }
+                }
+            }
+        }
+
+    }
+
+    public void Volver()
+    {
+        if (url == "")
+            navigationManager.NavigateTo("/viajes");
+        else
+            navigationManager.NavigateTo($"/{url}");
+    } }

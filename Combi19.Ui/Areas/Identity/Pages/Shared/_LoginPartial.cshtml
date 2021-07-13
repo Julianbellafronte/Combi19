@@ -1,0 +1,25 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Combi19.Ui.Data
+@inject SignInManager<AspNetUsers> SignInManager
+@inject UserManager<AspNetUsers> UserManager
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<ul class="navbar-nav">
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <li class="nav-item">
+            <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" method="post">
+                <button type="submit" style="background-color: #005473; margin:5px" class="btn btn-primary border-0">Cerrar sesion</button>
+            </form>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a style="background-color: #005473; margin:5px" class="btn btn-primary border-0" asp-area="Identity" asp-page="/Account/Register">Registrar</a>
+        </li>
+        <li class="nav-item">
+            <a style="background-color: #005473; margin:5px" class="btn btn-primary border-0" asp-area="Identity" asp-page="/Account/Login">Iniciar sesion</a>
+        </li>
+    }
+</ul>

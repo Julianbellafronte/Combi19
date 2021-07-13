@@ -1,0 +1,65 @@
+﻿@page "/eliminarInsumo/{id:int}"
+@inject IServicioInsumo servicioInsumo
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div tabindex="-1" style="display:block" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Datos de Insumo</h1>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@insumo" OnValidSubmit="Eliminar">
+                    <DataAnnotationsValidator />
+                    <table class="table">
+                        <tr>
+                            <td>Producto</td>
+                            <td>@insumo.Nombre</td>
+                        </tr>
+                        <tr>
+                            <td>Descripcion</td>
+                            <td>@insumo.Descripcion</td>
+                        </tr>
+                        <tr>
+                            <td>Precio</td>
+                            <td>$@insumo.Precio </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="text-align:center">
+                                <button type="submit" class="btn btn-outline-danger" value="Eliminar">Eliminar</button>
+                                <button type="button" class="btn btn-outline-secondary" @onclick="Cancelar">Cancelar</button>
+                            </td>
+                        </tr>
+                    </table>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public int id { get; set; }
+
+    Insumo insumo = new Insumo();
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (id > 0)
+            insumo = await servicioInsumo.Obtener(id);
+    }
+
+    protected async Task Eliminar()
+    {
+        await servicioInsumo.Eliminar(id);
+
+        navigationManager.NavigateTo("/insumos");
+    }
+    public void Cancelar()
+    {
+        navigationManager.NavigateTo("/insumos");
+    }
+}
+

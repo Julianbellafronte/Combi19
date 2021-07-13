@@ -1,0 +1,54 @@
+﻿@page "/usuarios"
+@inject IServicioUsuario servicioUsuario
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+@attribute [Authorize(Roles = "Admin")]
+    <div style="background: linear-gradient(#ffb73f, #ffd23f) " class="top-row px-1 auth border-0 position-relative">
+        <h1 style="color:white">Usuarios del sistema</h1>
+    </div>
+    @if (usuarios == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <div class="modal-content" style="margin:0px">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var usuario in usuarios)
+                    {
+                        <tr>
+                            <td><a href="/perfilUsuario/@usuario.IdAux"> @usuario.Nombre @usuario.Apellido</a></td>
+                            <td> @usuario.Email </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @code {
+        [Parameter]
+        public int Id { get; set; }
+        public IEnumerable<AspNetUsersDto> usuarios { get; set; }
+        public string Message { get; set; }
+
+        protected async override Task OnInitializedAsync()
+        {
+            try
+            {
+                usuarios = await servicioUsuario.ObtenerTodos();
+            }
+            catch (Exception ex)
+            {
+                Message = "Algo salio mal... " + ex.Message;
+            }
+        }
+    }
+

@@ -1,0 +1,126 @@
+﻿@page "/datosUsuario"
+@inject IServicioUsuario servicioUsuario
+@inject NavigationManager navigationManager
+@inject AuthenticationStateProvider auth
+@inject IJSRuntime JSRuntime
+
+
+<div tabindex="-1" style="display:block" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Datos personales</h1>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@usuario" OnValidSubmit="Guardar">
+                    <DataAnnotationsValidator />
+                    <table class="table">
+                        <tr>
+                            <td>Nombre</td>
+                            <td><input type="text" @bind="usuario.Nombre" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => usuario.Nombre)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Apellido</td>
+                            <td><input type="text" @bind="usuario.Apellido" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => usuario.Apellido)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Dni</td>
+                            <td><input type="text" pattern="[0-9]{7,8}" placeholder="10000000" @bind="usuario.Dni" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => usuario.Dni)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Fecha de nacimiento</td>
+                            <td><input type="date" max="@mayor.ToString("yyyy-MM-dd")" @bind="usuario.FechaNacimiento" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => usuario.FechaNacimiento)" /></td>
+                        </tr>
+                                @if (usuario.PlanPremium)
+                                {
+                                    <tr>
+                                        <td>Plan contratado: Premium</td>
+                                        <td><button type="button" class="btn btn-outline-danger" @onclick="@( () => CancelarPlan())">Cancelar plan premium</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label>Numero de tarjeta</label></td>
+                                        <td>
+                                            <input type="text" required pattern="[0-9]{16}" title="El numero de la tarjeta debe contener 16 digitos" @bind="usuario.NumeroTarjeta" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><label>Vencimiento</label></td>
+                                        <td><input type="month" min="@fechaHoy.ToString("yyyy-MM")" required @bind="usuario.Vencimiento" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label>Codigo de seguridad</label></td>
+                                        <td><input type="password" pattern="[0-9]{3}" required @bind="usuario.CodigoSeguridad" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label>Nombre de tarjeta</label></td>
+                                        <td><input type="text" required oninvalid="this.setCustomValidity('ingrese el nombre que figura en la tarjeta')" onvalid="this.setCustomValidity('')" @bind="usuario.NombreTarjeta" /></td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td>Plan contratado: Basico</td>
+                                        <td><button type="button" class="btn btn-outline-primary" @onclick="@( () => usuario.PlanPremium = true)">Comprar plan premium</button></td>
+                                    </tr>
+                                }
+                        <tr>
+                            <td colspan="2" style="text-align:center">
+                                <button type="submit" class="btn btn-outline-primary" value="Guardar">Guardar</button>
+                            </td>
+                        </tr>
+                    </table>
+                    @if (mostrar)
+                    {
+                        <div class="alert alert-success alert-dismissible" role="alert">
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close" @onclick= "@( () => Cerrar())"><span aria-hidden="true">&times;</span></button>
+                            @mensaje
+                        </div>
+                    }
+                </EditForm>
+                <div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+        AspNetUsersDto usuario = new AspNetUsersDto();
+        string mensaje = "";
+        bool mostrar = false;
+        DateTime fechaHoy = DateTime.Today.AddDays(31);
+        DateTime mayor = DateTime.Today.AddYears(-18);
+
+    protected async override Task OnInitializedAsync()
+    {
+        AuthenticationState astate = await auth.GetAuthenticationStateAsync();
+        string user = astate.User.Identity.Name;
+        AspNetUsersDto usuarioAux = await servicioUsuario.Obtener(user);
+
+        usuario = await servicioUsuario.Obtener(usuarioAux.IdAux);
+    }
+
+    public async Task Guardar()
+    {
+        await servicioUsuario.Guardar(usuario);
+        mostrar = true;
+        mensaje = "Se han actualizado los datos correctamente.";
+    }
+    public void Cerrar()
+    {
+        mostrar = false;
+
+    }
+
+    public async Task CancelarPlan()
+    {
+        if (await JSRuntime.Confirm("Anular Suscripcion", "¿Desea cancelar su suscripción Premium?", IJSExtensions.TipoMensajeSweetAlert.question))
+        {
+            usuario.PlanPremium = false;
+        }
+    }
+}

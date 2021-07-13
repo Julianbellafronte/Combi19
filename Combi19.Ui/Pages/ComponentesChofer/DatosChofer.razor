@@ -1,0 +1,87 @@
+﻿@page "/datosChofer"
+@inject IServicioChofer servicioChofer
+@inject NavigationManager navigationManager
+@inject AuthenticationStateProvider auth
+@inject IJSRuntime JSRuntime
+
+
+<div tabindex="-1" style="display:block" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Datos personales</h1>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@usuario" OnInvalidSubmit="Guardar">
+                    <DataAnnotationsValidator />
+                    <table class="table">
+                        <tr>
+                            <td>Nombre</td>
+                            <td><input type="text" @bind="usuario.Nombre" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => usuario.Nombre)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Apellido</td>
+                            <td><input type="text" @bind="usuario.Apellido" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => usuario.Apellido)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Dni</td>
+                            <td><input type="text" pattern="[0-9]{7,8}" placeholder="10000000" @bind="usuario.Dni" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => usuario.Dni)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Telefono</td>
+                            <td><input type="tel" placeholder="111-111-11111" required @bind="usuario.PhoneNumber" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => usuario.PhoneNumber)" /></td>
+                        </tr>                      
+                        <tr>
+                            <td colspan="2" style="text-align:center">
+                                <button type="submit" class="btn btn-outline-primary" value="Guardar">Guardar</button>
+                            </td>
+                        </tr>
+                    </table>
+                    @if (mostrar)
+                    {
+                        <div class="alert alert-success alert-dismissible" role="alert">
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close" @onclick="@( () => Cerrar())"><span aria-hidden="true">&times;</span></button>
+                            @mensaje
+                        </div>
+                    }
+                </EditForm>
+                <div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    AspNetUsersDto usuario = new AspNetUsersDto();
+    string mensaje = "";
+    bool mostrar = false;
+    DateTime fechaHoy = DateTime.Today;
+    DateTime mayor = DateTime.Today.AddYears(-18);
+
+    protected async override Task OnInitializedAsync()
+    {
+        AuthenticationState astate = await auth.GetAuthenticationStateAsync();
+        string user = astate.User.Identity.Name;
+        AspNetUsersDto usuarioAux = await servicioChofer.Obtener(user);
+
+        usuario = await servicioChofer.Obtener(usuarioAux.IdAux);
+    }
+
+    public async Task Guardar()
+    {
+        await servicioChofer.Guardar(usuario);
+        mostrar = true;
+        mensaje = "Se han actualizado los datos correctamente.";
+    }
+    public void Cerrar()
+    {
+        mostrar = false;
+
+    }
+
+}

@@ -1,0 +1,74 @@
+﻿<div class="icono">
+    <a href="/">
+        <img src="/logo_blanco.png" width="80" />
+    </a>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <ul class="nav flex-column">
+        <li class="nav-item px-3">
+            <AuthorizeView Roles="Admin">
+                <NavLink class="nav-link" href="choferes" Match="NavLinkMatch.All">
+                    <span class="oi oi-people" aria-hidden="true"></span> Choferes
+                </NavLink>
+                <NavLink class="nav-link" href="ciudades" Match="NavLinkMatch.All">
+                    <span class="oi oi-map-marker" aria-hidden="true"></span> Ciudades
+                </NavLink>
+                <NavLink class="nav-link" href="combis" Match="NavLinkMatch.All">
+                    <span class="oi oi-list" aria-hidden="true"></span> Combis
+                </NavLink>
+                <NavLink class="nav-link" href="insumos" Match="NavLinkMatch.All">
+                    <span class="oi oi-box" aria-hidden="true"></span> Insumos
+                </NavLink>
+                <NavLink class="nav-link" href="rutas" Match="NavLinkMatch.All">
+                    <span class="oi oi-map" aria-hidden="true"></span> Rutas
+                </NavLink>
+                <NavLink class="nav-link" href="viajes" Match="NavLinkMatch.All">
+                    <span class="oi oi-location" aria-hidden="true"></span> Viajes
+                </NavLink>
+                <NavLink class="nav-link" href="usuarios" Match="NavLinkMatch.All">
+                    <span class="oi oi-people" aria-hidden="true"></span> Usuarios
+                </NavLink>
+                <NavLink class="nav-link" href="comentarios" Match="NavLinkMatch.All">
+                    <span class="oi oi-comment-square" aria-hidden="true"></span> Comentarios
+                </NavLink>
+            </AuthorizeView>
+            <AuthorizeView Roles="Normal">
+                <NavLink class="nav-link" href="buscarViaje" Match="NavLinkMatch.All">
+                    <span class="oi oi-map" aria-hidden="true"></span> Buscar viaje
+                </NavLink>
+                <NavLink class="nav-link" href="DatosUsuario" Match="NavLinkMatch.All">
+                    <span class="oi oi-people" aria-hidden="true"></span> Datos cuenta
+                </NavLink>
+                <NavLink class="nav-link" href="misCompras" Match="NavLinkMatch.All">
+                    <span class="oi oi-list" aria-hidden="true"></span> Historial compras
+                </NavLink>
+                <NavLink class="nav-link" href="misComentarios" Match="NavLinkMatch.All">
+                    <span class="oi oi-list" aria-hidden="true"></span> Mis Comentarios
+                </NavLink>
+            </AuthorizeView>
+            <AuthorizeView Roles="Chofer">
+                <NavLink class="nav-link" href="HistorialViajes" Match="NavLinkMatch.All">
+                    <span class="oi oi-map" aria-hidden="true"></span> Historial de Viajes
+                </NavLink>
+                <NavLink class="nav-link" href="ProximosViajes" Match="NavLinkMatch.All">
+                    <span class="oi oi-people" aria-hidden="true"></span> Proximos Viajes
+                </NavLink>
+                <NavLink class="nav-link" href="VenderPasaje" Match="NavLinkMatch.All">
+                    <span class="oi oi-list" aria-hidden="true"></span> Venta de Pasaje
+                </NavLink>
+            </AuthorizeView>
+        </li>
+    </ul>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

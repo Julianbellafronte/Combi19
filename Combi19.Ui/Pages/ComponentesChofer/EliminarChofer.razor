@@ -1,0 +1,82 @@
+﻿@page "/eliminarChofer/{id:int}"
+@inject IServicioChofer servicioChofer
+@inject IServicioCombi servicioCombi
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+
+<div tabindex="-1" style="display:block" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Datos del Chofer</h1>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@chofer">
+                    <table class="table">
+                        <tr>
+                            <td>Nombre</td>
+                            <td>@chofer.Nombre @chofer.Apellido</td>
+                        </tr>
+                        <tr>
+                            <td>DNI</td>
+                            <td>@chofer.Dni</td>
+                        </tr>
+                        @if (tieneCombi == null)
+                        {
+                            <tr>
+                                <td colspan="2" style="text-align:center">
+                                    <button type="submit" class="btn btn-outline-danger" @onclick="Eliminar">Eliminar</button>
+                                    <button type="button" class="btn btn-outline-secondary" @onclick="Cancelar">Cancelar</button>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="2" style="text-align:center">
+                                    <p style="color:red">No se puede eliminar al chofer. Tiene combis asignadas.</p>
+                                    <button type="button" class="btn btn-outline-dark" @onclick="@( ()=> navigationManager.NavigateTo("/choferes"))">Volver</button>
+                                </td>
+                            </tr>
+                        }
+                    </table>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+
+    [Parameter]
+    public int id { get; set; }
+    public IEnumerable<Combi> combis = new List<Combi>();
+    public AspNetUsersDto chofer = new AspNetUsersDto();
+    public AspNetUsersDto tieneCombi = new AspNetUsersDto();
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (id > 0)
+        {
+            chofer = await servicioChofer.Obtener(id);
+            tieneCombi = await servicioChofer.TieneCombi(id);
+        }
+    }
+
+    protected async Task Eliminar()
+    {
+        await servicioChofer.Eliminar(id);
+
+        navigationManager.NavigateTo("/choferes");
+    }
+    public void Cancelar()
+    {
+        navigationManager.NavigateTo("/choferes");
+    }
+
+
+}
+
+

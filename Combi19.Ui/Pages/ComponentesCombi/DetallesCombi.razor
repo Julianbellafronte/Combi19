@@ -1,0 +1,164 @@
+﻿@page "/añadirCombi"
+@page "/editarCombi/{id:int}"
+@inject IServicioCombi servicioCombi
+@inject IServicioChofer servicioChofer
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div tabindex="-1" style="display:block" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Datos de la combi</h1>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@combi" OnValidSubmit="Guardar">
+                    <DataAnnotationsValidator />
+                    <table class="table">
+                        <tr>
+                            <td>Modelo</td>
+                            <td><input type="text" @bind="combi.Modelo" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => combi.Modelo)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Patente</td>
+                            <td><input type="text" @bind="combi.Patente" /> <h6><text style="color:red">@Message</text></h6></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => combi.Patente)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Asientos</td>
+                            <td><input type="number" @bind="combi.Asientos" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => combi.Asientos)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Tipo</td>
+                            <td>
+                                <label>
+                                    <input type="radio"
+                                           value="SuperComoda"
+                                           name="tipo"
+                                           checked="@(combi.SuperComoda == true)"
+                                           @onclick=" () => combi.SuperComoda = true">SuperComoda
+                                </label>
+                                <label>
+                                    <input type="radio"
+                                           value="Comoda"
+                                           name="tipo"
+                                           checked="@(combi.SuperComoda == false)"
+                                           @onclick="() => combi.SuperComoda = false">Comoda
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Chofer</td>
+                            <td>
+                                <InputSelect class="form-control col-sm-9" @bind-Value="@combi.IdChofer">
+
+                                    @if (choferAsignado != null)
+                                    {
+                                        <option value=" @choferAsignado.IdAux">@choferAsignado.Nombre @choferAsignado.Apellido </option>
+                                    }
+                                    @if (choferes.Count() > 0)
+                                    {
+                                        if (@id == 0)
+                                        {
+                                            <option value=""> Seleccione un chofer de la lista</option>
+                                        }
+                                        @foreach (AspNetUsersDto item in choferes)
+                                        {
+                                            <option value="@item.IdAux">@item.Nombre @item.Apellido </option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="" disabled>No hay choferes disponibles</option>
+                                    }
+                                </InputSelect>
+                            </td>
+                            <td colspan="2"> <ValidationMessage For="@( () => combi.IdChofer)" /></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="text-align:center">
+                                <button type="submit" class="btn btn-outline-primary" value="Guardar">Guardar</button>
+                                <button type="button" class="btn btn-outline-secondary" @onclick="Cancelar">Cancelar</button>
+                            </td>
+                        </tr>
+                    </table>
+                </EditForm>
+                <div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public int id { get; set; }
+    private IEnumerable<AspNetUsersDto> choferes = new List<AspNetUsersDto>();
+    private IEnumerable<Combi> combis = new List<Combi>();
+    Combi combi = new Combi();
+    public string Message { get; set; }
+    Combi c = new Combi();
+    string aux = "";
+    AspNetUsersDto choferAsignado= new AspNetUsersDto();
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            choferes = await servicioChofer.ObtenerTodosSinCombi();
+            combis = await servicioCombi.ObtenerTodos();
+        }
+        catch (Exception ex)
+        {
+            Message = "Algo salio mal... " + ex.Message;
+        }
+
+        if (id > 0) //If no Id has been passed, then it is a new Category
+        {
+            combi = await servicioCombi.Obtener(id);
+            aux = combi.Patente;
+            choferAsignado = await servicioChofer.Obtener(combi.IdChofer);
+        }
+    }
+    public bool existe(string patente)
+    {
+        foreach (Combi combi in combis)
+        {
+            if (combi.Patente.ToUpper() == patente.ToUpper())
+                return true;
+        }
+        return false;
+    }
+
+    public async Task Guardar()
+    {
+        if (aux.ToUpper() == combi.Patente.ToUpper() || (!existe(combi.Patente)))
+        {
+            combi.Patente = combi.Patente.ToUpper();
+            await servicioCombi.Guardar(combi);
+            if (combi.Id == 0)
+            {
+                navigationManager.NavigateTo("/combis");
+            }
+            else
+            {
+                navigationManager.NavigateTo($"/perfilCombi/{combi.Id}");
+            }
+        }
+        else
+        {
+            Message = "La patente ya existe";
+            navigationManager.NavigateTo($"/editarCombi/{id}");
+        }
+    }
+
+    public void Cancelar()
+    {
+        navigationManager.NavigateTo("/combis");
+    }
+
+
+}

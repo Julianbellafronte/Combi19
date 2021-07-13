@@ -1,0 +1,49 @@
+﻿@inject NavigationManager navigationManager
+
+<div style="width: 350px; height: 700px; margin-left: 5%; margin-right:5%" class="card" >
+    <img style="height:239px"  src="/bariloche.jpg" class="card-img-top" alt="...">
+    <div class="card-body">
+        <h2 class="card-title">Proximos Destinos</h2>
+        <hr />
+        <AuthorizeView Roles="Normal">
+            <Authorized >
+                <p style="font-size:25px" class="card-text">Enterarte cuales son los próximos destinos y arma tu viaje ideal.</p>
+                <br />
+                <br />
+                <hr />
+                <div style="display:flex; align-items:center; justify-content:center">
+                    <button class="btn btn-primary border-0" style="background-color: #005473;" @onclick="verViajes">Ver</button>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView Roles="Chofer">
+            <Authorized>
+                <p style="font-size:25px" class="card-text">Chequea cuales son tus proximos destinos</p>
+                <br />
+                <br />
+                <hr />
+                <div style="display:flex; align-items:center; justify-content:center">
+                    <button class="btn btn-primary border-0" style="background-color: #005473;" @onclick=@(() => navigationManager.NavigateTo("/proximosDestinos"))>Ver</button>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+            <AuthorizeView>
+                <NotAuthorized>
+                    <p style="font-size:25px" class="card-text">Registrate para enterarte cuales son los próximos destinos y arma tu viaje ideal.</p>
+                    <br />
+                    <br />
+                    <hr />
+                </NotAuthorized>
+            </AuthorizeView>
+    </div>
+</div>
+
+@code{
+
+    public void verViajes()
+    {
+        int dia = DateTime.Now.Day, mes = DateTime.Now.Month, anio = DateTime.Now.Year;
+
+        navigationManager.NavigateTo($"viajesProximos/{dia}/{mes}/{anio}");
+    }
+}

@@ -1,0 +1,16 @@
+﻿@page
+@using Microsoft.AspNetCore.Identity
+@using Combi19.Ui.Data
+@attribute [IgnoreAntiforgeryToken]
+@inject SignInManager<AspNetUsers> SignInManager
+@functions {
+    public async Task<IActionResult> OnPost()
+    {
+        if (SignInManager.IsSignedIn(User))
+        {
+            await SignInManager.SignOutAsync();
+        }
+
+        return Redirect("~/");
+    }
+}

@@ -1,0 +1,66 @@
+﻿@page "/"
+@using Combi19.Ui.Pages.ComponenteCompra
+
+<div class="centrar-banner">
+    <BlazorStrap.BSCarousel NumberOfItems="@items.Count">
+        <div class="carousel-inner">
+            @for (int i = 0; i < items.Count; i++)
+            {
+                <BlazorStrap.BSCarouselItem Src="@items[i].Source" Alt="@items[i].Alt" />
+            }
+        </div>
+        <BlazorStrap.BSCarouselControl CarouselDirection="BlazorStrap.CarouselDirection.Previous" NumberOfItems="@items.Count" />
+        <BlazorStrap.BSCarouselControl CarouselDirection="BlazorStrap.CarouselDirection.Next" NumberOfItems="@items.Count" />
+    </BlazorStrap.BSCarousel>
+</div>
+
+<div class="row">
+    <div style="width:60%; display:flex; align-items:center; justify-content:center; margin-top: 3rem!important;" class="row ">
+        <Combi19.Ui.Pages.Componentes.TarjetaVenta></Combi19.Ui.Pages.Componentes.TarjetaVenta>
+        <Combi19.Ui.Pages.Componentes.TarjetaInfo></Combi19.Ui.Pages.Componentes.TarjetaInfo>
+        <div style="width:100%" class="modal-dialog modal-lg">
+            <div class="modal-content modal-lg">
+                <img src="/tarjetas.jpg" />
+            </div>
+        </div>
+    </div>
+    <div style="width:40%" >
+            <Combi19.Ui.Pages.ComponentesComentario.Comentarios></Combi19.Ui.Pages.ComponentesComentario.Comentarios>
+    </div>
+</div>
+
+
+
+
+@code{
+
+    IList<Item> items = new List<Item>
+    {
+    new Item{
+    Source = "/banner2-sinpersona.jpg",
+    Caption = "Slide 1",
+    Header = "Slide 1 Header"
+    },
+    new Item{
+    Source = "/banner3-b2.jpg",
+    Alt="Second Slide",
+    Caption = "Slide 2",
+    Header = "Slide 2 Header"
+    },
+    new Item{
+    Source = "/combinueva-contransicion.gif",
+    Alt="Third Slide",
+    Caption = "Slide 3",
+    Header = "Slide 3 Header"
+    }
+    };
+
+    public class Item
+    {
+
+       public string Source { get; set; } = "";
+       public string Alt { get; set; } = "";
+       public string Caption { get; set; } = "";
+       public string Header { get; set; } = "";
+    }
+}

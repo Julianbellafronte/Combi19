@@ -1,0 +1,77 @@
+﻿@page "/misComentarios"
+@inject IServicioComentario servicioComentario
+@inject IServicioUsuario servicioUsuario
+@inject AuthenticationStateProvider auth
+@inject NavigationManager navigationManager
+@inject IJSRuntime JSRuntime
+
+@attribute [Authorize(Roles = "Normal")]
+    <div style="background: linear-gradient(#ffb73f, #ffd23f) " class="top-row px-1 auth border-0 position-relative">
+        <h1 style="color:white">Comentarios Personales</h1>
+        </div>
+        @if (comentarios == null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else if (comentarios.Count() == 0)
+        {
+            <p>No hay comentarios disponibles</p>
+        }
+        else
+        {
+            <div class="container mt-5 mb-5">
+                <div class="d-flex justify-content-center row">
+                    <div class="col-md-8">
+                        @foreach (Comentario comentario in comentarios)
+                        {
+                            <div class="p-3  mt-2 rounded" style="background-color:white">
+                                <div class="d-flex justify-content-between">
+                                    <div class="d-flex flex-row user">
+                                        <img class="rounded-circle img-fluid img-responsive" src="/PJ.jpg" width="50">
+                                        <div class="d-flex flex-column ml-2"><span style="font-size:18px" class="font-weight-bold black ">@comentario.NombreCreador</span><span style="font-size:17px" class="day">Fecha: @comentario.Fecha.ToString("dd/MM/yyyy")</span></div>
+                                    </div>
+                                </div>
+                                <div class="comment-text text-justify mt-2">
+                                    <p style="font-size:16px">@comentario.Contenido</p>
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-outline-info" @onclick="@(() => navigationManager.NavigateTo($"/editarComentario/{comentario.Id}"))">Editar</button>
+                                    <button type="button" class="btn btn-outline-info" @onclick="@(() => Eliminar(comentario.Id))">Eliminar</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        @code {
+            public IEnumerable<Comentario> comentarios;
+            public string Message { get; set; }
+            AspNetUsersDto creador = new AspNetUsersDto();
+            string name;
+
+            protected async override Task OnInitializedAsync()
+            {
+                try
+                {
+                    AuthenticationState astate = await auth.GetAuthenticationStateAsync();
+                    name = astate.User.Identity.Name;
+                    creador = await servicioUsuario.Obtener(name);
+                    comentarios = await servicioComentario.ObtenerTodosUsuario(creador.IdAux);
+                    //comentarios = await servicioComentario.ObtenerDestacados(); --> para el inicio mostrar los n primeros
+                }
+                catch (Exception ex)
+                {
+                    Message = "Algo salio mal... " + ex.Message;
+                }
+            }
+            public async Task Eliminar(int id)
+            {
+                if (await JSRuntime.Confirm("Confirmar", "¿Desea borrar el comentario?", IJSExtensions.TipoMensajeSweetAlert.question))
+                {
+                    await servicioComentario.Eliminar(id);
+                    navigationManager.NavigateTo("/misComentarios", true);
+                }
+            }
+        }

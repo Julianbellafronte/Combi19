@@ -1,0 +1,40 @@
+﻿@inject IServicioViaje servicioViaje
+@inject IServicioRuta servicioRuta
+@inject IServicioCiudad servicioCiudad
+@inject IServicioProvincia servicioProvincia
+
+<p>
+    <b>
+        @hora
+    </b>
+
+</p>
+
+@code {
+    [Parameter] public int IdViaje { get; set; }
+
+    Viaje viaje = new Viaje();
+    Ruta ruta = new Ruta();
+    string hora;
+    IEnumerable<Viaje> viajes = new List<Viaje>();
+    string Message;
+
+    protected async override Task OnInitializedAsync()
+    {
+        viajes = await servicioViaje.ObtenerTodos();
+        try
+        {
+            if (IdViaje > 0) //If no Id has been passed, then it is a new Category
+            {
+                viaje = await servicioViaje.Obtener(IdViaje);
+                ruta = await servicioRuta.Obtener(viaje.IdRuta);
+                hora = ruta.HsSalida.ToString("HH:mm");
+
+            }
+        }
+        catch
+        {
+
+        }
+    }
+}

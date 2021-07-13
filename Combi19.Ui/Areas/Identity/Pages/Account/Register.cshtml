@@ -1,0 +1,119 @@
+﻿@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Registrate";
+}
+@using Combi19.Ui.Pages;
+<div style="text-align:center">
+    <h1>@ViewData["Title"]</h1>
+    <hr />
+</div>
+<div tabindex="-1" style="display:block" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div style="justify-content:center" class="modal-header">
+                <div class="col-md-10">
+                    <form asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                        <h4>Crea tu cuenta</h4>
+                        <hr />
+                        <div class="form-group">
+                            <label asp-for="Input.Nombre"></label>
+                            <input asp-for="Input.Nombre" class="form-control" />
+                            <span asp-validation-for="Input.Nombre" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Input.Apellido"></label>
+                            <input asp-for="Input.Apellido" class="form-control" />
+                            <span asp-validation-for="Input.Apellido" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Input.Dni"></label>
+                            <input asp-for="Input.Dni" class="form-control" />
+                            <span asp-validation-for="Input.Dni" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Input.Email"></label>
+                            <input asp-for="Input.Email" class="form-control" />
+                            <span asp-validation-for="Input.Email" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label>Contraseña</label>
+                            <input asp-for="Input.Password" class="form-control" />
+                            <span asp-validation-for="Input.Password" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label>Confirma tu contraseña</label>
+                            <input asp-for="Input.ConfirmPassword" class="form-control" />
+                            <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha de nacimiento</label>
+                            <input asp-for="Input.FechaNacimiento" min="@menor" max="@mayor" title="Debe ser mayor de 18 años para poder registrarse" class="form-control" />
+                            <span asp-validation-for="Input.FechaNacimiento" class="text-danger"></span>
+                        </div>
+                        <label>
+                            <input asp-for="Input.PlanPremium" type="checkbox" id=check onchange="javascript:showContent()" /> Usuario Premium
+                            <span asp-validation-for="Input.PlanPremium" class="text-danger"></span>
+                        </label>
+                        <div id="content" style="display: none;">
+                            <div class="form-group">
+                                <label>Numero de tarjeta</label>
+                                <input asp-for="Input.NumeroTarjeta" class="form-control"  placeholder="Ingrese los 16 digitos de su tarjeta" value="1111111111111111" />
+                                <span asp-validation-for="Input.NumeroTarjeta" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label>Vencimiento</label>
+                                <input asp-for="Input.Vencimiento"  type="date" min="@fechaHoy" class="form-control" title="La fecha debe ser mayor al mes y año actual" value=@DateTime.Today.ToString("yyyy-MM-dd") />
+                                <span asp-validation-for="Input.Vencimiento" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label>Codigo de seguridad</label>
+                                <input asp-for="Input.CodigoSeguridad" class="form-control" placeholder="Ingrese los 3 digitos que figuran en la parte trasera de su tarjeta" value="000" />
+                                <span asp-validation-for="Input.CodigoSeguridad" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label>Nombre de tarjeta</label>
+                                <input asp-for="Input.NombreTarjeta" class="form-control" placeholder="Ingrese el nombre tal cual figura en la tarjeta" value="nombre" />
+                                <span asp-validation-for="Input.NombreTarjeta" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <button type="submit" style="background-color: #005473" class="btn btn-primary border-0">Registrar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <br />
+
+            @section Scripts {
+                <partial name="_ValidationScriptsPartial" />
+
+                <script type="text/javascript">
+                    function showContent() {
+                        element = document.getElementById("content");
+                        check = document.getElementById("check");
+                        if (check.checked) {
+                            element.style.display = 'block';
+                        } else {
+                            element.style.display = 'none';
+                        }
+                    }
+
+                </script>
+
+            }
+
+            @functions{
+                string fechaHoy = DateTime.Today.ToString("yyyy-MM");
+                string set = DateTime.Today.AddDays(31).ToString("yyyy-MM");
+                string mayor = DateTime.Today.AddYears(-18).ToString("yyyy-MM-dd");
+                string menor = DateTime.Today.AddYears(-100).ToString("yyyy-MM-dd");
+            }
+
+
+
+
+
+
+

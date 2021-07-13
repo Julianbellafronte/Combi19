@@ -1,0 +1,61 @@
+﻿<AuthorizeView Roles="Admin">
+    <Authorized>
+        <form style="margin:5px" method="get" action="choferes">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Choferes</button>
+        </form>
+        <form style="margin:5px" method="get" action="ciudades">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Ciudades</button>
+        </form>
+        <form style="margin:5px" method="get" action="combis">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Combis</button>
+        </form>
+        <form style="margin:5px" method="get" action="insumos">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Insumos</button>
+        </form>
+        <form style="margin:5px" method="get" action="rutas">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Rutas</button>
+        </form>
+        <form style="margin:5px" method="get" action="viajes">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Viajes</button>
+        </form>
+        <form style="margin:5px" method="get" action="combis">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Combis</button>
+        </form>
+        <form style="margin:5px" method="get" action="usuarios">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Usuarios</button>
+        </form>
+        <form style="margin:5px" method="get" action="comentarios">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Comentarios</button>
+        </form>
+        <form style="margin:5px" method="get" action="estadisticas">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Estadisticas</button>
+        </form>
+    </Authorized>
+</AuthorizeView>
+<AuthorizeView Roles="Normal">
+    <Authorized>
+        <form style="margin:5px" method="get" action="misCompras">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473;">Historial</button>
+        </form>
+        <form style="margin:5px" method="get" action="misComentarios">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473;">Mis comentarios</button>
+        </form>
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="Chofer">
+    <Authorized>
+        <form style="margin:5px" method="get" action="ViajeEnCurso">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473;">Viaje en Curso</button>
+        </form>
+        <form style="margin:5px" method="get" action="misViajes">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473;">Historial de viajes</button>
+        </form>
+        <form style="margin:5px" method="get" action="proximosDestinos">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473;">Proximos viajes</button>
+        </form>
+        <form style="margin:5px" method="get" action="registrarUsuario">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473;">Registrar usuario</button>
+        </form>
+    </Authorized>
+</AuthorizeView>

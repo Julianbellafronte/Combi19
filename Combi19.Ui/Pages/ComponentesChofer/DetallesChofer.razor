@@ -1,0 +1,129 @@
+﻿@page "/añadirChofer"
+@page "/editarChofer/{id:int}"
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<AspNetUsers> UserManager
+@inject IServicioChofer servicioChofer
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Chofer")]
+
+<div tabindex="-1" style="display:block" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Datos de chofer</h1>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@chofer" OnInvalidSubmit="Guardar">
+                    <DataAnnotationsValidator />
+                    <table class="table">
+                        <tr>
+                            <td>Nombre</td>
+                            <td><input type="text" @bind="chofer.Nombre" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => chofer.Nombre)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Apellido</td>
+                            <td><input type="text" @bind="chofer.Apellido" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => chofer.Apellido)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Email</td>
+                            <td><input type="email" @bind="chofer.Email" /><h6 style="color:red">@Message</h6></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => chofer.Email)" /></td>
+                        </tr>
+                        @if (id == 0)
+                        {
+                            <tr>
+                                <td>Clave</td>
+                                <td><input type="password" @bind="chofer.Clave" /><h6 style="color:red">@Message</h6></td>
+                                <td colspan="2"> <ValidationMessage For="@( () => chofer.Clave)" /></td>
+                            </tr>
+                        }
+                        <tr>
+                            <td>DNI</td>
+                            <td><input type="text" pattern="[0-9]{7,8}" @bind="chofer.Dni" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => chofer.Dni)" /></td>
+                        </tr>
+                        <tr>
+                            <td>Telefono</td>
+                            <td><input type="tel" placeholder="111-111-11111" required @bind="chofer.PhoneNumber" /></td>
+                            <td colspan="2"> <ValidationMessage For="@( () => chofer.PhoneNumber)" /></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="text-align:center">
+                                <button type="submit" class="btn btn-outline-primary" value="Guardar">Guardar</button>
+                                <button type="button" class="btn btn-outline-primary" @onclick="@(( ) => navigationManager.NavigateTo("/Choferes"))">Cancelar</button>
+                            </td>
+                        </tr>
+                    </table>
+                </EditForm>
+                <div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+    AspNetUsersDto chofer = new AspNetUsersDto();
+    AspNetUsers choferNuevo = new AspNetUsers();
+    IEnumerable<AspNetUsersDto> choferes = new List<AspNetUsersDto>();
+    string Message, email;
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (id > 0) //If no Id has been passed, then it is a new Category
+        {
+            chofer = await servicioChofer.Obtener(id);
+            email = chofer.Email;
+        }
+        else
+        {
+            choferes = await servicioChofer.ObtenerTodos();
+        }
+    }
+
+    public async Task Guardar()
+    {
+        AspNetUsersDto c = await servicioChofer.ExisteEmail(chofer.Email);
+        if (id != 0)
+        {
+            if ( c ==null|| chofer.Email == email)
+            {
+                await servicioChofer.Guardar(chofer);
+                navigationManager.NavigateTo($"/perfilChofer/{id}");
+            }
+            else
+            {
+                Message = "El email ya se encuentra registrado";
+                navigationManager.NavigateTo($"/editarChofer/{id}");
+            }
+        }
+        else
+        {
+            await registrar();
+        }
+    }
+
+    protected async Task registrar()
+    {
+        var user = new AspNetUsers
+        {
+            UserName = chofer.Email,
+            Email = chofer.Email,
+            Nombre = chofer.Nombre,
+            Apellido = chofer.Apellido,
+            Dni = chofer.Dni,
+            PhoneNumber = chofer.PhoneNumber
+        };
+        var result = await UserManager.CreateAsync(user, chofer.Clave);
+        if (result.Succeeded)
+        {
+            result = await UserManager.AddToRoleAsync(user, "Chofer");
+        }
+        navigationManager.NavigateTo($"/Choferes");
+    }
+}

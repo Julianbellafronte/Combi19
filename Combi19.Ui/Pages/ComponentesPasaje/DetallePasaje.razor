@@ -1,0 +1,63 @@
+﻿@page "/detallePasaje/{id:int}"
+@inject NavigationManager navigationManager
+
+@inject IServicioPasaje servicioPasaje
+
+<div tabindex="-1" style="display:block" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Datos de pasaje</h1>
+            </div>
+            <div class="modal-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Dni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>@Pasaje.Nombre</td>
+                            <td>@Pasaje.Apellido</td>
+                            <td>@Pasaje.Dni</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="display:flex; justify-content:center">
+                    <div style="text-align: center;">
+                        <button type="button" class="btn btn-outline-dark" @onclick="Volver">Volver</button>
+                    </div>
+                </div>                
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    public Pasaje Pasaje { get; set; } = new Pasaje();
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            Pasaje = await servicioPasaje.ObtenerPasaje(id);
+        }
+        catch (Exception ex)
+        {
+            string Message = "Algo salio mal... " + ex.Message;
+        }
+
+    }
+
+    public void Volver()
+    {
+            navigationManager.NavigateTo($"/pasajes/{Pasaje.IdViaje}",true);
+
+    }
+}

@@ -1,0 +1,69 @@
+﻿@page "/comentarios"
+@inject IServicioComentario servicioComentario
+@inject NavigationManager navigationManager
+@inject IJSRuntime JSRuntime
+@attribute [Authorize(Roles = "Admin")]
+
+
+@if (comentarios == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="container mt-5 mb-5">
+        <div class="d-flex justify-content-center row">
+            <div class="col-md-10">
+                <div><DetallesComentarios></DetallesComentarios></div>
+                @foreach (Comentario comentario in comentarios)
+                {
+            <div style="background-color:white" class=" p-3 mt-2 rounded">
+                <div class="d-flex justify-content-between">
+                    <div class="d-flex flex-row user">
+                        <img class="rounded-circle img-fluid img-responsive" src="/PJ.jpg" width="55">
+                        <div class="d-flex flex-column ml-2"><span style="font-size:18px" class="font-weight-bold black ">@comentario.NombreCreador</span><span style="font-size:17px" class="day">Fecha: @comentario.Fecha.ToString("dd/MM/yyyy")</span></div>
+                    </div>
+                </div>
+                <div class="comment-text text-justify mt-2">
+                    <p style="font-size:16px">@comentario.Contenido</p>
+                </div>
+                <AuthorizeView Roles="Admin">
+                <div>
+                    <button type="button" class="btn btn-outline-info" @onclick="@(() => Eliminar(comentario.Id))">Eliminar</button>
+                </div>
+                </AuthorizeView>
+            </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    public IEnumerable<Comentario> comentarios = new List<Comentario>();
+    public string Message { get; set; }
+
+    [Parameter]
+    public string ruta { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            comentarios = await servicioComentario.ObtenerDestacados();
+            //comentarios = await servicioComentario.ObtenerDestacados(); --> para el inicio mostrar los n primeros
+        }
+        catch (Exception ex)
+        {
+            Message = "Algo salio mal... " + ex.Message;
+        }
+    }
+    public async Task Eliminar(int id)
+    {
+        if (await JSRuntime.Confirm("Confirmar", "¿Desea borrar el comentario?", IJSExtensions.TipoMensajeSweetAlert.question))
+        {
+            await servicioComentario.Eliminar(id);
+            navigationManager.NavigateTo("/comentarios", true);
+        }
+    }
+}

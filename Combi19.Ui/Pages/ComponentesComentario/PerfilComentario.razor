@@ -1,0 +1,37 @@
+﻿@page "/perfilComentario/{id:int}"
+@inject IServicioComentario servicioComentario
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Normal")]
+
+<h1>Comentario</h1>
+<table class="table">
+    <tr>
+        <td><b>Contenido:</b> @comentario.Contenido</td>
+    </tr>
+    <tr>
+        <td colspan="2" style="text-align:center">
+            <button type="button" class="btn btn-outline-dark" @onclick="Volver">Volver</button>
+        </td>
+    </tr>
+</table>
+
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    Comentario comentario = new Comentario();
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (id > 0) //If no Id has been passed, then it is a new Category
+        {
+            comentario = await servicioComentario.Obtener(id);
+        }
+    }
+
+    public void Volver()
+    {
+        navigationManager.NavigateTo("/misComentarios");
+    }
+}

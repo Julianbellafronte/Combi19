@@ -1,0 +1,260 @@
+﻿@page "/testeo/{Id:int}"
+@page "/probar"
+
+@inject IServicioPasaje servicioPasaje
+@inject IServicioVenta servicioVenta
+@inject IServicioViaje servicioViaje
+@inject IServicioTesteo servicioTesteo
+@inject IServicioUsuario servicioUsuario
+@inject IJSRuntime JSRuntime
+@inject NavigationManager navigationManager
+
+<div style="background: linear-gradient(#ffb73f, #ffd23f) " class="top-row px-1 auth border-0 position-relative">
+    <h1 style="color:white">Testeo</h1>
+</div>
+
+<div class="row justify-content-center mb-5" style="margin:50px; text-align:left">
+    <div class="col-lg-8 col-12">
+        <EditForm Model="testeo" OnValidSubmit="Guardar">
+
+            <h2> @pasaje.Nombre @pasaje.Apellido</h2>
+            <div class="form-group">
+                <div class="my-2 pb-1 barra2"></div>
+            </div>
+
+            <div>
+                <h4>¿Cual es la temperatura corporal?</h4>
+                <div>
+                    <input type="number" step="0.1" class="form-control col-sm-1" @bind="testeo.Temperatura" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="my-2 pb-1 barra1"></div>
+            </div>
+
+            <div>
+                <h4>¿Ha percibido una marcada perdida del olfato?</h4>
+                <div>
+                    <label>
+                        <input type="radio"
+                               value="Si"
+                               name="tipo1"
+                               checked="@(testeo.Olfato == true)"
+                               @onclick=" () => TieneOlfato(true)">Si
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        <input type="radio"
+                               value="No"
+                               name="tipo1"
+                               checked="@(testeo.Olfato == false)"
+                               @onclick="() => TieneOlfato(false)">No
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="my-2 pb-1 barra2"></div>
+            </div>
+
+            <div>
+                <h4>¿Ha percibido una marcada perdida del gusto?</h4>
+                <div>
+                    <label>
+                        <input type="radio"
+                               value="Si"
+                               name="tipo2"
+                               checked="@(testeo.Gusto == true)"
+                               @onclick=" () => TieneGusto(true)">Si
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        <input type="radio"
+                               value="No"
+                               name="tipo2"
+                               checked="@(testeo.Gusto == false)"
+                               @onclick="() => TieneGusto(false)">No
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="my-2 pb-1 barra1"></div>
+            </div>
+
+            <div>
+                <h4>¿Tiene tos?</h4>
+                <div>
+                    <label>
+                        <input type="radio"
+                               value="Si"
+                               name="tipo3"
+                               checked="@(testeo.Tos == true)"
+                               @onclick=" () => TieneTos(true)">Si
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        <input type="radio"
+                               value="No"
+                               name="tipo3"
+                               checked="@(testeo.Tos == false)"
+                               @onclick="() => TieneTos(false)">No
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="my-2 pb-1 barra2"></div>
+            </div>
+
+            <div>
+                <h4>¿Presenta dolor de garganta?</h4>
+                <div>
+                    <label>
+                        <input type="radio"
+                               value="Si"
+                               name="tipo4"
+                               checked="@(testeo.DolorGarganta == true)"
+                               @onclick=" () => TieneDolor(true)">Si
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        <input type="radio"
+                               value="No"
+                               name="tipo4"
+                               checked="@(testeo.DolorGarganta == false)"
+                               @onclick="() => TieneDolor(false)">No
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="my-2 pb-1 barra1"></div>
+            </div>
+
+            <div>
+                <h4>Declaración jurada de salud</h4>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" required>
+                    <label class="form-check-label" for="flexCheckDefault">
+                        Declaro bajo juramento que no tengo ni tuve en los últimos 14 días síntomas
+                        compatibles con COVID-19, ni contacto estrecho con una persona diagnosticada con
+                        COVID-19 o que, en caso contrario, cumplí el debido aislamiento
+                    </label>
+                </div>
+            </div>
+
+            <div style="text-align: center">
+                <button class="btn btn-primary border-0" type="submit" style="background-color: #005473; margin:50px">Confirmar</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    [Parameter]
+    public string Dni { get; set; }
+    Testeo testeo = new Testeo();
+    Pasaje pasaje = new Pasaje();
+    Venta venta = new Venta();
+    int cant;
+
+    protected async override Task OnInitializedAsync()
+    {
+        pasaje = await servicioPasaje.ObtenerPasaje(Id);
+        testeo.IdPasaje = pasaje.Id;
+        venta = await servicioVenta.Obtener(pasaje.IdVenta);
+    }
+
+    public async Task Guardar()
+    {
+        if (await JSRuntime.Confirm("Confirmar", "¿Desea guardar los cambios ingresados?", IJSExtensions.TipoMensajeSweetAlert.question))
+        {
+            if (cant >= 2 || testeo.Temperatura >= 38)
+            {
+                await servicioVenta.Eliminar(pasaje.IdVenta, venta.PrecioTotal); //cancela la venta
+                await servicioPasaje.CancelarPasaje(pasaje); //cancela todos los pasajes que tienen el mismo idVenta
+                AspNetUsersDto usuario = await servicioUsuario.Obtener(venta.IdUsuario);
+                Viaje v = await servicioViaje.Obtener(venta.IdViaje);
+                v.Asientos += venta.CantidadPasajes;
+                await servicioViaje.Guardar(v);
+                usuario.FechaSintoma = DateTime.Today;
+                await servicioUsuario.Guardar(usuario);
+
+            }
+            else
+            {
+                venta.Estado = "Confirmado";
+                await servicioVenta.Actualizar(venta);
+                await servicioPasaje.Confirmar(Id);
+            }
+            await servicioTesteo.Guardar(testeo);
+            navigationManager.NavigateTo($"/pasajes/{pasaje.IdViaje}", true);
+        }
+
+    }
+
+    public void TieneOlfato(bool ok)
+    {
+        if (ok)
+        {
+            cant++;
+            testeo.Olfato = true;
+        }
+        else
+        {
+            cant--;
+            testeo.Olfato = false;
+        }
+    }
+
+    public void TieneGusto(bool ok)
+    {
+        if (ok)
+        {
+            cant++;
+            testeo.Gusto = true;
+        }
+        else
+        {
+            cant--;
+            testeo.Gusto = false;
+        }
+    }
+
+    public void TieneTos(bool ok)
+    {
+        if (ok)
+        {
+            cant++;
+            testeo.Tos = true;
+        }
+        else
+        {
+            cant--;
+            testeo.Tos = false;
+        }
+    }
+
+    public void TieneDolor(bool ok)
+    {
+        if (ok)
+        {
+            cant++;
+            testeo.DolorGarganta = true;
+        }
+        else
+        {
+            cant--;
+            testeo.DolorGarganta = false;
+        }
+    }
+
+}

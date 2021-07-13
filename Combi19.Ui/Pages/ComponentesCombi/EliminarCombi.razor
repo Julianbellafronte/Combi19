@@ -1,0 +1,94 @@
+﻿@page "/eliminarCombi/{id:int}"
+@inject IServicioCombi servicioCombi
+@inject IServicioRuta servicioRuta
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div tabindex="-1" style="display:block" role="dialog"
+     <div class="modal-dialog">
+         <div class="modal-content">
+             <div class="modal-header">
+                 <h1>Datos de la Combi</h1>
+             </div>
+             <div class="modal-body">
+                 <EditForm Model="@combi" OnValidSubmit="Eliminar">
+                     <DataAnnotationsValidator />
+                     <table class="table">
+                         <tr>
+                             <td>Modelo</td>
+                             <td>@combi.Modelo</td>
+                         </tr>
+                         <tr>
+                             <td>Patente</td>
+                             <td>@combi.Patente</td>
+                         </tr>
+                             @if (!tieneRuta())
+                             {
+                                <tr>
+                                    <td colspan="2" style="text-align:center">
+                                        <button type="submit" class="btn btn-outline-danger" value="Eliminar">Eliminar</button>
+                                        <button type="button" class="btn btn-outline-secondary" @onclick="Cancelar">Cancelar</button>
+                                    </td>
+                                </tr>
+                             }
+                             else
+                             {
+                                 <tr>
+                                     <td colspan="2" style="text-align:center">
+                                         <p style="color:red">No se puede eliminar la combi. Tiene una ruta asignada.</p>
+                                         <button type="button" class="btn btn-outline-dark" @onclick="@( ()=> navigationManager.NavigateTo("/combis"))">Volver</button>
+                                     </td>
+                                 </tr>
+                             }
+                     </table>
+
+                 </EditForm>
+             </div>
+         </div>
+     </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public int id { get; set; }
+
+    Combi combi = new Combi();
+    public IEnumerable<Ruta> rutas = new List<Ruta>();
+    bool tiene = false;
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (id > 0)
+        {
+            combi = await servicioCombi.Obtener(id);
+            rutas = await servicioRuta.ObtenerTodos();
+        }
+    }
+
+    protected async Task Eliminar()
+    {
+        await servicioCombi.Eliminar(id);
+
+        navigationManager.NavigateTo("/combis");
+    }
+    public void Cancelar()
+    {
+        navigationManager.NavigateTo("/combis");
+    }
+
+    protected bool tieneRuta()
+    {
+        foreach (Ruta ruta in rutas)
+        {
+            if (ruta.IdCombi == combi.Id)
+            {
+                tiene = true;
+                break;
+            }
+        }
+        return tiene;
+    }
+}
+
+

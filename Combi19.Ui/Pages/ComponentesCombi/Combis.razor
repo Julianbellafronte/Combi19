@@ -1,0 +1,66 @@
+﻿@page "/combis"
+@inject IServicioCombi servicioCombi
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+@attribute [Authorize(Roles = "Admin")]
+<div style="background: linear-gradient(#ffb73f, #ffd23f) " class="top-row px-1 auth border-0 position-relative">
+    <h1 style="color:white">Combis del sistema</h1>
+</div>
+
+@if (combis == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="modal-content">
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td colspan="2"><button type="button" class="btn btn-outline-info" @onclick="@(() => navigationManager.NavigateTo($"/añadirCombi"))">Agregar combi</button></td>
+                </tr>
+            </tbody>
+
+        </table>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Modelo/Patente</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var combi in combis)
+                {
+                    <tr>
+                        <td><a href="/perfilCombi/@combi.Id"> @combi.Modelo @combi.Patente</a></td>
+                        <td>
+                            <button type="button" class="btn btn-outline-info" @onclick="@(() => navigationManager.NavigateTo($"/editarCombi/{combi.Id}"))">Editar</button>
+                            <button type="submit" class="btn btn-outline-danger" @onclick="@(() => navigationManager.NavigateTo($"/eliminarCombi/{combi.Id}"))">Eliminar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    public IEnumerable<Combi> combis { get; set; }
+    public string Message { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            combis = await servicioCombi.ObtenerTodos();
+        }
+        catch (Exception ex)
+        {
+            Message = "Algo salio mal... " + ex.Message;
+        }
+
+    }
+}

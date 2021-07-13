@@ -1,0 +1,185 @@
+﻿@page "/viajesDisponibles/{idO:int}/{idD:int}/{dia:int}/{mes:int}/{anio:int}"
+@inject IServicioRuta servicioRuta
+@inject IServicioCiudad servicioCiudad
+@inject IServicioProvincia servicioProvincia
+@inject IServicioViaje servicioViaje
+@inject IServicioCombi servicioCombi
+@inject IServicioUsuario servicioUsuario
+@inject AuthenticationStateProvider auth
+@inject NavigationManager navigationManager
+@inject IJSRuntime JSRuntime 
+@attribute [Authorize(Roles = "Normal")]
+
+<h1>Lista de Viajes</h1>
+
+@if (viajesCompletos == null)
+{
+    <p>No hay viajes disponibles para los datos ingresados</p>
+}
+else
+{
+    <div class="modal-content">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Ruta</th>
+                    <th>Fecha de Salida</th>
+                    <th>Hora de Salida</th>
+                    <th>Precio</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (ViajeCompleto item in viajesCompletos)
+                {
+                    <tr>
+                        <td><a href="/perfilViaje/@item.IdViaje">@item.CiudadOrigen, @item.ProvinciaOrigen  -  @item.CiudadDestino, @item.ProvinciaDestino</a></td>
+                        <td>@item.FechaSalida.Date.ToString("dd/MM/yy")</td>
+                        <td>@item.HsSalida.ToString("HH:mm")</td>
+                        <td>@item.Precio</td>
+                        <td>
+                            <button type="button" class="btn btn-outline-info" @onclick="@(()=>Comprar(item.IdViaje))">Comprar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int IdO { get; set; }
+    [Parameter]
+    public int IdD { get; set; }
+    [Parameter]
+    public int Dia { get; set; }
+    [Parameter]
+    public int Mes { get; set; }
+    [Parameter]
+    public int Anio { get; set; }
+
+
+    public string Mensaje { get; set; }
+    public ViajeCompleto viaje { get; set; } = new ViajeCompleto();
+    public IEnumerable<Viaje> viajes = new List<Viaje>();
+    public List<ViajeCompleto> viajesCompletos { get; set; }
+    public List<CiudadProvincia> ciudadesProvincias { get; set; } = new List<CiudadProvincia>();
+    public string Message { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        viaje.IdCiudadOrigen = IdO;
+        viaje.IdCiudadDestino = IdD;
+        string fecha = Dia + "/" + Mes + "/" + Anio;
+        viaje.FechaSalida = Convert.ToDateTime(fecha);
+        await buscarViaje();
+    }
+
+
+    public async Task buscarViaje() //ES UN ASCO Y ME DA GUERGUENZA
+    {
+        Combi combi = new Combi();
+        IEnumerable<Ruta> tipoRuta = await servicioRuta.ObtenerTodas(viaje.IdCiudadOrigen, viaje.IdCiudadDestino);
+        bool ok = false;
+
+        if (tipoRuta.Count() > 0) //Si existe una ruta
+        {
+            foreach (Ruta itemR in tipoRuta)
+            {
+                IEnumerable<Viaje> viajeBusqueda = await servicioViaje.ObtenerViajes(itemR.Id, viaje.FechaSalida);
+                if (viajeBusqueda.Count() > 0) //Verifico si existe un viaje asignado para la ruta encontrada
+                {
+                    Mensaje = "";
+                    foreach (Viaje item in viajeBusqueda) //Busco para la ciudad de origen y destino el nombre y provincia (Capas se pueda mejorar)
+                    {
+                        if (!ok)
+                        {
+                            viajesCompletos = new List<ViajeCompleto>();
+                            ok = true;
+                        }
+                        Ciudad ciudadOrigen = await servicioRuta.ObtenerCiudad(viaje.IdCiudadOrigen);
+                        Provincia provinciaOrigen = await servicioCiudad.ObtenerProvincia(ciudadOrigen.IdProvincia);
+                        Ciudad ciudadDestino = await servicioRuta.ObtenerCiudad(viaje.IdCiudadDestino);
+                        Provincia provinciaDestino = await servicioCiudad.ObtenerProvincia(ciudadDestino.IdProvincia);
+
+                        combi = await servicioCombi.ObtenerCombiRuta(itemR.Id); //Obtengo la combi de la ruta asignada al viaje.
+
+                        ViajeCompleto viajeCompletoBusqueda = new ViajeCompleto(
+                         item.Id, ciudadOrigen.Nombre, provinciaOrigen.Nombre, ciudadDestino.Nombre, provinciaOrigen.Nombre,
+                            item.FechaSalida, item.Precio, itemR.HsSalida, itemR.Id, viaje.IdCiudadOrigen,
+                            viaje.IdCiudadDestino, combi, item.Asientos);
+                        viajesCompletos.Add(viajeCompletoBusqueda);
+                    }
+                }
+                else
+                {
+                    Mensaje = "No se encontraron resultados.";
+                }
+            }
+        }
+        else
+        {
+            Mensaje = "No se encontraron resultados.";
+        }
+    }
+
+
+    protected async Task obtenerCiudadProvincia() //A partir de un viaje obtengo su ruta, ciudades y sus provincias, y cargo todo en un viajeCompleto
+    {
+        Ciudad ciudad1 = new Ciudad();
+        Ciudad ciudad2 = new Ciudad();
+        Ruta tipoRuta = new Ruta();
+        Provincia tipoProvincia1 = new Provincia();
+        Provincia tipoProvincia2 = new Provincia();
+        Combi combi = new Combi();
+        ViajeCompleto viaje;
+        foreach (Viaje item in viajes)
+        {
+            tipoRuta = await servicioRuta.Obtener(item.IdRuta);
+            ciudad1 = await servicioRuta.ObtenerCiudad(tipoRuta.IdCiudad1);
+            tipoProvincia1 = await servicioCiudad.ObtenerProvincia(ciudad1.IdProvincia);
+
+            ciudad2 = await servicioRuta.ObtenerCiudad(tipoRuta.IdCiudad2);
+            tipoProvincia2 = await servicioCiudad.ObtenerProvincia(ciudad2.IdProvincia);
+
+            combi = await servicioCombi.ObtenerCombiRuta(tipoRuta.Id);
+
+            viaje = new ViajeCompleto(
+                item.Id, ciudad1.Nombre, tipoProvincia1.Nombre, ciudad2.Nombre, tipoProvincia2.Nombre,
+                item.FechaSalida, item.Precio, tipoRuta.HsSalida, tipoRuta.Id, ciudad1.Id, ciudad2.Id, combi, item.Asientos);
+            viajesCompletos.Add(viaje);
+        }
+    }
+
+    protected async Task cargarCiudadesProvincias() //Cargo para cada ciudad su provincia
+    {
+        IEnumerable<Ciudad> ciudades = new List<Ciudad>();
+        Ciudad ciudad = new Ciudad();
+        Provincia tipoProvincia = new Provincia();
+        CiudadProvincia c;
+
+        ciudades = await servicioCiudad.ObtenerTodos();
+
+        foreach (Ciudad item in ciudades)
+        {
+            ciudad = await servicioCiudad.Obtener(item.Id);
+            tipoProvincia = await servicioCiudad.ObtenerProvincia(ciudad.IdProvincia);
+
+            c = new CiudadProvincia(ciudad.Id, ciudad.Nombre, ciudad.IdProvincia, ciudad.CodigoPostal, tipoProvincia.Nombre);
+            ciudadesProvincias.Add(c);
+        }
+    }
+
+    public async Task Comprar(int id)
+    {
+        string name;
+        AuthenticationState astate = await auth.GetAuthenticationStateAsync();
+        name = astate.User.Identity.Name;
+        AspNetUsersDto user = await servicioUsuario.Obtener(name);
+        if(DateTime.Today.AddDays(-15)<=user.FechaSintoma)
+            await JSRuntime.MostrarMensaje("Operacion invalida", "Usted ha presentado sintomas de COVID-19, no puede realizar una compra hasta que no se cumpla el plazo estimado de 15 dias", IJSExtensions.TipoMensajeSweetAlert.error);
+        else
+        navigationManager.NavigateTo($"/comprarPasaje/{id}");
+    }
+}

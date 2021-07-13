@@ -1,0 +1,125 @@
+﻿@page "/estadisticas"
+
+@inject IServicioVenta servicioVenta
+@inject IServicioRuta servicioRuta
+@inject IServicioCiudad servicioCiudad
+@inject IServicioUsuario servicioUsuario
+
+<div style="display:flex; justify-content:center; margin: 2%">
+    <div style="width:30%; float:left">
+        <div class="modal-content">
+            <div class="modal-body">
+                <EditForm Model="@estadistica" OnValidSubmit="Buscar">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <InputSelect class="form-control col-sm-13" @bind-Value="@estadistica.Opcion">
+                                    <option value="Ventas entre fechas">Ventas entre fechas</option>
+                                    <option value="Usuarios con sintomas entre fechas">Usuarios con sintomas entre fechas</option>
+                                </InputSelect>
+                            </tr>
+                            <tr>
+                                <td>Fecha 1:</td>
+                                <td><input type="date" @bind="@estadistica.Fecha1" /></td>
+                            </tr>
+                            <tr>
+                                <td>Fecha 2:</td>
+                                <td><input type="date" @bind="@estadistica.Fecha2" /></td>
+                            </tr>
+                            <tr>
+                                <td style="display:flex; justify-content:center">
+                                    <button type="submit" class="btn btn-outline-primary" value="Buscar">Buscar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+    <div style="width:60%; float:left; margin-left:5%">
+        <div class="modal-content">
+            <div class="modal-body">
+                @if (mostrarViajes)
+                {
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Estado</th>
+                                <th>Precio total</th>
+                                <th>Cantidad de pasajes</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (Venta item in ventas)
+                            {
+                                <tr>
+                                    <td>@item.Estado</td>
+                                    <td>@item.PrecioTotal</td>
+                                    <td>@item.CantidadPasajes</td>
+                                    <td>@item.Fecha.ToString("dd/MM/yyyy")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    if (mostrarUsuarios) { 
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Apellido</th>
+                                    <th>Dni</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (AspNetUsersDto item in usuariosSintomas)
+                                {
+                                    <tr>                                   
+                                        <td>@item.Nombre</td>
+                                        <td>@item.Apellido</td>
+                                        <td>@item.Dni</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    public Estadistica estadistica = new Estadistica();
+    public IEnumerable<Venta> ventas = new List<Venta>();
+    public IEnumerable<AspNetUsersDto> usuariosSintomas = new List<AspNetUsersDto>();
+    public List<AspNetUsersDto> usuarioSintoma = new List<AspNetUsersDto>();
+
+    bool mostrarViajes = false;
+    bool mostrarUsuarios = false;
+
+
+    protected async Task Buscar()
+    {
+        ventas = new List<Venta>();
+        usuariosSintomas = new List<AspNetUsersDto>();
+        mostrarViajes = false;
+        mostrarUsuarios = false;
+        if (estadistica.Opcion.Equals("Viajes entre fechas"))
+        {
+            ventas = await servicioVenta.ObtenerVentas(estadistica.Fecha1, estadistica.Fecha2);
+            mostrarViajes = true;
+        }
+        else
+        {
+            usuariosSintomas = await servicioUsuario.Obtener(estadistica.Fecha1, estadistica.Fecha2);
+            mostrarUsuarios = true;
+        }
+    }
+
+}

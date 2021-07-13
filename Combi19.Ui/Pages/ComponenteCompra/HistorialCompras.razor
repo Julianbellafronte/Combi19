@@ -1,0 +1,101 @@
+﻿@page "/misCompras"
+@using Combi19.Ui.Pages.Componentes;
+@inject IServicioVenta servicioVenta
+@inject IServicioViaje servicioViaje
+@inject AuthenticationStateProvider auth
+@inject IServicioUsuario servicioUsuario
+@inject IJSRuntime JSRuntime
+@inject NavigationManager navigationManager
+
+
+<div style="background: linear-gradient(#ffb73f, #ffd23f) " class="top-row px-1 auth border-0 position-relative">
+    <h1 style="color:white">Lista de Compras</h1>
+</div>
+
+<p>@Message</p>
+
+@if (compras == null)
+{
+    <p><em>Loading...</em></p>
+
+}
+else if (compras.Count() == 0)
+{
+    <p>No tienes compras realizadas aún</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Ruta</th>
+                <th>Fecha y hora de salida</th>
+                <th>Estado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (Venta compra in compras)
+            {
+
+                <tr>
+
+                    <td>
+                        <a href="/PerfilCompra/@compra.Id">
+                            <ComponenteTitulo IdViaje="compra.IdViaje"></ComponenteTitulo>
+                        </a>
+                    </td>
+                    <td>@compra.Fecha.ToString("dd/MM/yy") a las <ComponenteFecha IdViaje="compra.IdViaje"></ComponenteFecha> hs</td>
+                    <td>@compra.Estado</td>
+                    <td>
+                        @if (compra.Estado == "Pendiente")
+                        {
+                            <button type="button" class="btn btn-outline-info" @onclick="@(() => Cancelar(compra))">Cancelar</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    public IEnumerable<Venta> compras { get; set; }
+    [Parameter] public bool Ok { get; set; } = false;
+    public string Message { get; set; }
+    string name;
+    public AspNetUsersDto User { get; set; }
+    public Venta compra { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            AuthenticationState astate = await auth.GetAuthenticationStateAsync();
+            name = astate.User.Identity.Name;
+            User = await servicioUsuario.Obtener(name);
+            compras = await servicioVenta.ObtenerTodos(User.IdAux);
+        }
+        catch (Exception ex)
+        {
+            Message = "Algo salio mal... " + ex.Message;
+        }
+
+    }
+    public async Task Cancelar(Venta venta)
+    {
+        if (await JSRuntime.Confirm("Confirmar", "¿Desea cancelar el viaje?", IJSExtensions.TipoMensajeSweetAlert.warning))
+        {
+            double reintegro;
+            if ((venta.Fecha - DateTime.Today).TotalDays >= 2)
+                reintegro = venta.PrecioTotal;
+            else
+                reintegro = venta.PrecioTotal / 2;
+            await servicioVenta.Eliminar(venta.Id, reintegro);
+            Viaje v = await servicioViaje.Obtener(venta.IdViaje);
+            v.Asientos += venta.CantidadPasajes;
+            await servicioViaje.Guardar(v);
+            navigationManager.NavigateTo("/misCompras", true);
+        }
+    }
+}

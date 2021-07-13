@@ -1,0 +1,110 @@
+﻿@page "/viajesProximos/{dia:int}/{mes:int}/{anio:int}"
+@inject IServicioRuta servicioRuta
+@inject IServicioCiudad servicioCiudad
+@inject IServicioProvincia servicioProvincia
+@inject IServicioViaje servicioViaje
+@inject IServicioUsuario servicioUsuario
+@inject AuthenticationStateProvider auth
+@inject NavigationManager navigationManager
+@inject IJSRuntime JSRuntime
+@attribute [Authorize(Roles = "Normal")]
+
+<h1>Lista de Viajes</h1>
+<p>@Message</p>
+
+@if (viajes == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="modal-content">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Ruta</th>
+                    <th>Fecha de Salida</th>
+                    <th>Hora de Salida</th>
+                    <th>Precio</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (ViajeCompleto item in viajesCompletos)
+                {
+                    <tr>
+                        <td><a href="/perfilViaje/@item.IdViaje">@item.CiudadOrigen, @item.ProvinciaOrigen  -  @item.CiudadDestino, @item.ProvinciaDestino</a></td>
+                        <td>@item.FechaSalida.Date.ToString("dd/MM/yy")</td>
+                        <td>@item.HsSalida.ToString("HH:mm")</td>
+                        <td>@item.Precio</td>
+                        <td>
+                            <button type="submit" class="btn btn-outline-info" @onclick="(()=> Comprar(item.IdViaje))">Comprar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Dia { get; set; }
+    [Parameter]
+    public int Mes { get; set; }
+    [Parameter]
+    public int Anio { get; set; }
+
+    public IEnumerable<Viaje> viajes = new List<Viaje>();
+    public List<ViajeCompleto> viajesCompletos = new List<ViajeCompleto>();
+    public string Message { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            string fecha = Dia + "/" + Mes + "/" + Anio;
+            viajes = await servicioViaje.ViajesProximos(Convert.ToDateTime(fecha));
+            await obtenerCiudadProvincia();
+        }
+        catch (Exception ex)
+        {
+            Message = "Algo salio mal... " + ex.Message;
+        }
+    }
+
+    protected async Task obtenerCiudadProvincia()
+    {
+        Ciudad ciudad1 = new Ciudad();
+        Ciudad ciudad2 = new Ciudad();
+        Ruta tipoRuta = new Ruta();
+        Provincia tipoProvincia1 = new Provincia();
+        Provincia tipoProvincia2 = new Provincia();
+        ViajeCompleto viaje;
+        foreach (Viaje item in viajes)
+        {
+            tipoRuta = await servicioRuta.Obtener(item.IdRuta);
+            ciudad1 = await servicioRuta.ObtenerCiudad(tipoRuta.IdCiudad1);
+            tipoProvincia1 = await servicioCiudad.ObtenerProvincia(ciudad1.IdProvincia);
+
+            ciudad2 = await servicioRuta.ObtenerCiudad(tipoRuta.IdCiudad2);
+            tipoProvincia2 = await servicioCiudad.ObtenerProvincia(ciudad2.IdProvincia);
+
+            viaje = new ViajeCompleto(item.Id, ciudad1.Nombre, tipoProvincia1.Nombre, ciudad2.Nombre, tipoProvincia2.Nombre, item.FechaSalida, item.Precio, tipoRuta.HsSalida, item.Asientos);
+            viajesCompletos.Add(viaje);
+        }
+    }
+
+    public async Task Comprar(int id)
+    {
+        string name;
+        AuthenticationState astate = await auth.GetAuthenticationStateAsync();
+        name = astate.User.Identity.Name;
+        AspNetUsersDto user = await servicioUsuario.Obtener(name);
+        if (DateTime.Today.AddDays(-15) <= user.FechaSintoma)
+            await JSRuntime.MostrarMensaje("Operacion invalida", "Usted ha presentado sintomas de COVID-19, no puede realizar una compra hasta que no se cumpla el plazo estimado de 15 dias", IJSExtensions.TipoMensajeSweetAlert.error);
+        else
+            navigationManager.NavigateTo($"/comprarPasaje/{id}");
+    }
+
+}

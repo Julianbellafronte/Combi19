@@ -1,0 +1,373 @@
+﻿@page "/comprarPasaje/{id:int}"
+@inject IServicioInsumo servicioInsumo
+@inject IServicioCombi servicioCombi
+@inject IServicioViaje servicioViaje
+@inject IServicioRuta servicioRuta
+@inject IServicioVenta servicioVenta
+@inject IServicioUsuario servicioUsuario
+@inject IServicioPasaje servicioPasaje
+@inject IServicioListaInsumo servicioListaInsumo
+@inject IServicioCiudad servicioCiudad
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider auth
+@inject NavigationManager navigationManager
+@using Combi19.Ui.Pages.Componentes;
+@using System.Data;
+
+
+<div class="modal-content">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Ruta</th>
+                <th>Fecha de Salida</th>
+                <th>Hora de Salida</th>
+                <th>Precio</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@viajeCompleto.CiudadOrigen, @viajeCompleto.ProvinciaOrigen  -  @viajeCompleto.CiudadDestino, @viajeCompleto.ProvinciaDestino</td>
+                <td>@viajeCompleto.FechaSalida.Date.ToString("dd/MM/yy")</td>
+                <td>@viajeCompleto.HsSalida.ToString("HH:mm")</td>
+                <td>@viajeCompleto.Precio</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+@if (PasajesInfo.Count == 0)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <div style="text-align: center; ">
+        <table>
+            <tr>
+                <td>
+                    @if (cantPasajes < viaje.Asientos)
+                    {
+                        <button style="margin-left: 10px; margin-top: 10px" class="btn btn-primary" @onclick="IncrementarPasaje">Agregar Pasaje</button>
+                    }
+                    else
+                    {
+                        <p style="color: red">No hay más pasajes disponibles</p>
+                    }
+                </td>
+                <td></td>
+                <td>
+                    @if (cantPasajes > 1)
+                    {
+                        <button style="margin-left: 10px; margin-top: 10px" class="btn btn-primary" @onclick="Decrementar">Quitar</button>
+                    }
+                    else
+                    {
+                        <button style="margin-left: 10px; margin-top: 10px" class="btn btn-primary" disabled>Quitar</button>
+                    }
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div style="width:100%; display:flex; justify-content:center">
+        <div style="width: 30%; float: left">
+            <h3 style="text-align:center">Formulario de Pasajeros</h3>
+            @for (int i = 0; i < cantPasajes; i++)
+            {
+                if (PasajesInfo.Count > i)
+                {
+                    <div style="float: left; margin-left: 5%; margin-right: 5%; width: 100%">
+                        <FormularioPasaje Pasajes="PasajesInfo"
+                                          cantConfirmar="cantConfirmar"
+                                          Pos="i"
+                                          CantidadPasajes="cantPasajes">
+                        </FormularioPasaje>
+                    </div>
+                }
+                else
+                {
+                    <p><em>Cargando...</em></p>
+                }
+            }
+        </div>
+        <div style="width: 50%; float: left">
+            @*INSUMOS*@
+            <div style="margin: 5%;">
+                <h3 style="text-align:center">¿Desea agregar insumos a su viaje?</h3>
+                <div class="selector-multiple">
+                    <ul class="selectable-ul">
+                        @foreach (Insumo item in NoSeleccionados)
+                        {
+                            <li @onclick="@(() => Seleccionar(item))">@(item.Nombre + " " + item.Descripcion) </li>
+                        }
+                    </ul>
+                    <div class="selector-multiple-botones">
+                        <button type="button" @onclick="SeleccionarTodo">>></button>
+                        <button type="button" @onclick="DeseleccionarTodo">@removerTodoTexto</button>
+                    </div>
+                    <ul class="selectable-ul">
+                        @foreach (Insumo item in Seleccionados)
+                        {
+                            <li @onclick="@(() => Deseleccionar(item))">@(item.Nombre + " " + item.Descripcion)</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+            @*Resumen*@
+            <div tabindex="-1" style="display:block" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Total: $@total</h2>
+                        </div>
+                        <div class="modal-body">
+                            Pasaje/s:
+                            <ul>
+                                <li>
+                                    @viaje.Precio * @PasajesInfo.Count = $@(viaje.Precio * PasajesInfo.Count)
+                                </li>
+                            </ul>
+                            Insumo/s:
+                            <ul>
+                                @foreach (Insumo item in Seleccionados)
+                                {
+                                    <li>@item.Nombre - $@item.Precio</li>
+                                }
+                            </ul>
+                            <h4>Monto final: $@total</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @*TARJETA*@
+            <div tabindex="-1" style="display:block" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1>Datos de la Tarjeta</h1>
+                        </div>
+                        <div class="modal-body">
+                            <EditForm Model="@Tarjeta" OnValidSubmit="crearVenta">
+                                <DataAnnotationsValidator />
+                                <table class="table">
+                                    <tr>
+                                        <td>Numero de tarjeta</td>
+                                        <td>
+                                            <input type="text" requiered pattern="[0-9]{16}" class="form-control col-sm-9" @bind="@Tarjeta.NumeroTarjeta" />
+                                        </td>
+                                        <td colspan="2"> <ValidationMessage For="@( () => Tarjeta.NumeroTarjeta)" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Nombre en la tarjeta</td>
+                                        <td>
+                                            <input type="text" required class="form-control col-sm-9" @bind="@Tarjeta.NombreTarjeta" />
+                                        </td>
+                                        <td colspan="2"> <ValidationMessage For="@( () => Tarjeta.NombreTarjeta)" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Vencimiento</td>
+                                        <td>
+                                            <input type="month" required min="@DateTime.Today.ToString("yyyy-MM")" class="form-control col-sm-9" @bind="@Tarjeta.Vencimiento" />
+                                        </td>
+                                        <td colspan="2"> <ValidationMessage For="@( () => Tarjeta.Vencimiento)" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Codigo de seguridad</td>
+                                        <td>
+                                            <input type="text" required pattern="[0-9]{3}" class="form-control col-sm-5" @bind="@Tarjeta.CodigoSeguridad" />
+                                        </td>
+                                        <td colspan="2"> <ValidationMessage For="@( () => Tarjeta.CodigoSeguridad)" /></td>
+                                    </tr>
+                                </table>
+                                <div style="text-align: center;">
+                                    <button type="submit" class="btn btn-outline-info" value="crearVenta">Comprar</button>
+                                    <button type="button" class="btn btn-outline-danger" @onclick="Cancelar">Cancelar</button>
+                                </div>
+                                @if (!mostrar)
+                                {
+                                    <div class="alert alert-danger alert-dismissible" role="alert">
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                        @mensaje
+                                    </div>
+                                }
+                            </EditForm>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>     
+}
+@code {
+        [Parameter]
+        public int id { get; set; }
+    public int cantPasajes { get; set; } = 1;
+    [Parameter] public List<Pasaje> PasajesInfo { get; set; } = new List<Pasaje>();
+    [Parameter] public List<Insumo> Seleccionados { get; set; } = new List<Insumo>();
+    [Parameter] public List<Insumo> NoSeleccionados { get; set; } = new List<Insumo>();
+
+    private string removerTodoTexto = "<<";
+
+    public Pasaje pasaje = new Pasaje();
+    public IEnumerable<Viaje> viajes = new List<Viaje>();
+    public IEnumerable<Insumo> insumos = new List<Insumo>();
+    public Combi combi = new Combi();
+    public Viaje viaje = new Viaje();
+    public Ruta ruta = new Ruta();
+    public Tarjeta Tarjeta { get; set; } = new Tarjeta();
+    [Parameter] public List<int> cantConfirmar { get; set; } = new List<int>();
+    string mensaje = "Se deben confirmar todos los pasajes.";
+    bool mostrar = true;
+
+    double total = 0;
+
+    public ViajeCompleto viajeCompleto = new ViajeCompleto();
+
+    AuthenticationState astate;
+    string user;
+    AspNetUsersDto comprador;
+
+    protected async override Task OnInitializedAsync()
+    {
+        cantConfirmar.Add(1);
+        PasajesInfo.Add(new Pasaje());
+        astate = await auth.GetAuthenticationStateAsync();
+        user = astate.User.Identity.Name;
+        comprador = await servicioUsuario.Obtener(user);
+        try
+        {
+            Tarjeta = await servicioUsuario.ObtenerTarjeta(comprador.IdAux);
+            viaje = await servicioViaje.Obtener(id);
+            total = viaje.Precio;
+            ruta = await servicioRuta.Obtener(viaje.IdRuta);
+            await obtenerCiudadProvincia();
+            combi = await servicioCombi.ObtenerCombiRuta(ruta.Id);
+            insumos = await servicioInsumo.ObtenerTodos();
+            for (int i = 0; i < insumos.Count(); i++)
+            {
+                NoSeleccionados.Add(insumos.ElementAt(i));
+            }
+        }
+        catch (Exception ex)
+        {
+            string Message = "Algo salio mal... " + ex.Message;
+        }
+    }
+
+    protected void cargarTarjeta()
+    {
+        Tarjeta.NombreTarjeta = comprador.NombreTarjeta;
+        Tarjeta.NumeroTarjeta = comprador.NumeroTarjeta;
+        Tarjeta.CodigoSeguridad = comprador.CodigoSeguridad;
+    }
+
+    protected async Task crearVenta()
+    {
+        if (cantConfirmar.Count == 0)
+        {
+            if (await JSRuntime.Confirm("Confirmar", "¿Confirmar Compra?", IJSExtensions.TipoMensajeSweetAlert.question))
+            {
+                mostrar = true;
+                Venta venta = new Venta("Pendiente", comprador.IdAux, viaje.Precio, viaje.FechaSalida, PasajesInfo, comprador.PlanPremium, viaje.Id, Tarjeta.NumeroTarjeta);
+                Row ident = await servicioVenta.Guardar(venta);
+                viaje.Asientos -= venta.CantidadPasajes;
+                await servicioViaje.Guardar(viaje);
+                foreach (Pasaje item in PasajesInfo)
+                {
+                    item.IdVenta = ident.Ident;
+                    item.IdViaje = id;
+                    item.Estado = "Pendiente";
+                    await servicioPasaje.Guardar(item);
+                }
+                foreach (Insumo insumo in Seleccionados)
+                {
+                    await servicioListaInsumo.Guardar(new ListaInsumo { IdInsumo = insumo.Id, IdVenta = ident.Ident });
+                    venta.PrecioTotal += insumo.Precio;
+                }
+                venta.Id = ident.Ident;
+                await servicioVenta.Actualizar(venta);
+                navigationManager.NavigateTo("/misCompras");
+            }
+        }
+        else
+        {
+            mostrar = false;
+        }
+
+    }
+
+    public async Task Cancelar()
+    {
+        if (await JSRuntime.Confirm("Cancelar", "¿Desea deshacer los cambios?", IJSExtensions.TipoMensajeSweetAlert.question))
+        {
+            navigationManager.NavigateTo("/");
+        }
+    }
+
+    public void IncrementarPasaje()
+    {
+        cantPasajes++;
+        cantConfirmar.Add(1);
+        PasajesInfo.Add(new Pasaje());
+        calcularTotal();
+    }
+
+    public void Decrementar()
+    {
+        cantPasajes--;
+        cantConfirmar.Remove(1);
+        PasajesInfo.RemoveAt(PasajesInfo.Count() - 1);
+        calcularTotal();
+    }
+
+    protected async Task obtenerCiudadProvincia()
+    {
+        Ciudad ciudad1 = new Ciudad();
+        Ciudad ciudad2 = new Ciudad();
+        Provincia tipoProvincia1 = new Provincia();
+        Provincia tipoProvincia2 = new Provincia();
+
+        ciudad1 = await servicioRuta.ObtenerCiudad(ruta.IdCiudad1);
+        tipoProvincia1 = await servicioCiudad.ObtenerProvincia(ciudad1.IdProvincia);
+
+        ciudad2 = await servicioRuta.ObtenerCiudad(ruta.IdCiudad2);
+        tipoProvincia2 = await servicioCiudad.ObtenerProvincia(ciudad2.IdProvincia);
+
+        viajeCompleto = new ViajeCompleto(viaje.Id, ciudad1.Nombre, tipoProvincia1.Nombre, ciudad2.Nombre, tipoProvincia2.Nombre, viaje.FechaSalida, viaje.Precio, ruta.HsSalida, viaje.Asientos);
+    }
+
+    protected void calcularTotal()
+    {
+        double totalParcial = 0;
+        foreach (Insumo insumo in Seleccionados)
+        {
+            totalParcial += insumo.Precio;
+        }
+        totalParcial += (viaje.Precio * PasajesInfo.Count);
+        total = totalParcial;
+    }
+    private void Seleccionar(Insumo item)
+    {
+        Seleccionados.Add(item);
+        calcularTotal();
+    }
+
+    private void Deseleccionar(Insumo item)
+    {
+        Seleccionados.Remove(item);
+        calcularTotal();
+    }
+
+    private void SeleccionarTodo()
+    {
+        Seleccionados.AddRange(NoSeleccionados);
+        calcularTotal();
+    }
+
+    private void DeseleccionarTodo()
+    {
+        Seleccionados.Clear();
+        calcularTotal();
+    }
+}

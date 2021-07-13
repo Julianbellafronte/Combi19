@@ -1,0 +1,103 @@
+﻿@page "/PerfilCompra/{id:int}"
+@inject IServicioVenta servicioVenta
+@inject NavigationManager navigationManager
+@inject AuthenticationStateProvider auth
+@inject IServicioUsuario servicioUsuario
+@inject IServicioListaInsumo servicioLista
+
+@if (compra == null)
+{
+    <p><em>Loading..</em></p>
+}
+else
+{
+    <div tabindex="-1" style="display:block" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1>Datos de compra</h1>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <tr>
+                            <td>Estado: @compra.Estado</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Precio Pasajes: ($@compra.PrecioUnitario x @compra.CantidadPasajes pasaje/s) = $@(compra.CantidadPasajes * compra.PrecioUnitario)</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Fecha de compra: @compra.Fecha.ToString("dd/MM/yyyy")</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Insumos seleccionados:</td>
+                            @if (lista.Count() > 0)
+                            {
+                                <td>
+                                    <ul>
+                                        @foreach (Insumo ins in lista)
+                                        {
+                                            <li>@ins.Nombre @ins.Descripcion $@ins.Precio X @ins.Cantidad = $@(ins.Precio * ins.Cantidad)</li>
+                                        }
+                                    </ul>
+                                </td>
+                            }
+                            else
+                            {
+                                <td>
+                                    <p>No se seleccionaron insumos</p>
+                                </td>
+                            }
+                        </tr>
+                        @if (User.PlanPremium)
+                        {
+                            <tr>
+                                <td>Precio Final Pasaje/s: $@(compra.CantidadPasajes * compra.PrecioUnitario - (compra.CantidadPasajes * compra.PrecioUnitario)*0.1)</td>
+                                <td><h6> Tenes un 10% de descuento por ser usuario Premium</h6></td>
+                                <td></td>
+                            </tr>
+                        }
+                        <tr>
+                            <td>Precio Total: $@compra.PrecioTotal</td>
+                            <td></td>
+                        </tr>
+                        @if (compra.Estado == "Cancelado")
+                        {
+                            <tr>
+                                <td>Reintegro: @compra.Reintegro</td>
+                            </tr>
+                        }
+                        <tr>
+                            <td colspan="2" style="text-align:center">
+                                <button type="button" class="btn btn-outline-primary" @onclick="@(()=>navigationManager.NavigateTo("/MisCompras"))">Volver</button>
+                            </td>
+                        </tr>
+                    </table>
+                    <div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+@code {
+
+    [Parameter] public int id { get; set; }
+    AuthenticationState astate;
+    string name;
+    public AspNetUsersDto User { get; set; }
+    public Venta compra { get; set; }
+    public IEnumerable<Insumo> lista { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        AuthenticationState astate = await auth.GetAuthenticationStateAsync();
+        name = astate.User.Identity.Name;
+        User = await servicioUsuario.Obtener(name);
+        compra = await servicioVenta.Obtener(id);
+        lista = await servicioLista.ObtenerTodos(compra.Id);
+
+    }
+}

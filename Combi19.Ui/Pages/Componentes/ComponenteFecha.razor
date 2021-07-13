@@ -1,0 +1,29 @@
+﻿@inject IServicioViaje servicioViaje
+@inject IServicioRuta servicioRuta
+@if(ruta==null){
+    <p><em>Loading...</em></p>
+}
+else
+@ruta.HsSalida.ToString("HH:mm")
+
+@code {
+    [Parameter] public int IdViaje { get; set; }
+    Ruta ruta;
+    Viaje viaje;
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+
+            viaje = await servicioViaje.Obtener(IdViaje);
+            ruta = await servicioRuta.Obtener(viaje.IdRuta);
+
+        }
+        catch
+        {
+
+        }
+    }
+
+}

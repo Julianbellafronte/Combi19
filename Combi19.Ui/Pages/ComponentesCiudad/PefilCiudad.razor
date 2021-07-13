@@ -1,0 +1,48 @@
+﻿@page "/perfilCiudad/{id:int}"
+@inject IServicioCiudad servicioCiudad
+@inject IServicioProvincia servicioProvincia
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+<h1>Ciudad @ciudad.Nombre, @p.Nombre</h1>
+<div class="modal-content">
+    <table class="table">
+        <tr>
+            <td><b>Nombre:</b> @ciudad.Nombre</td>
+        </tr>
+        <tr>
+            <td><b>Provincia:</b> @p.Nombre</td>
+        </tr>
+        <tr>
+            <td><b>Codigo Postal:</b> @ciudad.CodigoPostal</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align:center">
+                <button type="button" class="btn btn-outline-dark" @onclick="Volver">Volver</button>
+            </td>
+        </tr>
+    </table>
+</div>
+
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+    Provincia p = new Provincia();
+
+    Ciudad ciudad = new Ciudad();
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (id > 0) //If no Id has been passed, then it is a new Category
+        {
+            ciudad = await servicioCiudad.Obtener(id);
+            p = await servicioProvincia.Obtener(ciudad.IdProvincia);
+        }
+    }
+
+    public void Volver()
+    {
+        navigationManager.NavigateTo("/ciudades");
+    }
+}

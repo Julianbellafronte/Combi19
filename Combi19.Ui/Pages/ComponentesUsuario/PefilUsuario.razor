@@ -1,0 +1,78 @@
+﻿@page "/perfilUsuario/{id:int}"
+@inject IServicioUsuario servicioUsuario
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+@using Combi19.Ui.Pages; 
+
+<h1>Perfil de @usuario.Nombre @usuario.Apellido</h1>
+<div class="modal-content">
+    <table class="table">
+        <tr>
+            <td><b>Nombre:</b> @usuario.Nombre</td>
+        </tr>
+        <tr>
+            <td><b>Apellido:</b> @usuario.Apellido</td>
+        </tr>
+        <tr>
+            <td><b>Email:</b> @usuario.Email</td>
+        </tr>
+        <tr>
+            <td><b>Dni:</b> @usuario.Dni </td>
+        </tr>
+        <tr>
+            <td><b>Fecha de Nacimiento:</b> @usuario.FechaNacimiento.Date.ToString("dd-MM-yyyy") </td>
+        </tr>
+        <tr>
+            @if (usuario.PlanPremium)
+            {
+                <td><b>Plan:</b> Premium </td>
+                <td>
+                    <input type="button" value="Cancelar" @onclick="CancelarPlan" />
+                </td>
+
+            }
+            else
+            {
+                <td><b>Plan</b>: Basico </td>
+            }
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align:center">
+                <button type="button" class="btn btn-outline-dark" @onclick="Volver">Volver</button>
+            </td>
+        </tr>
+    </table>
+</div>
+
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    AspNetUsersDto usuario = new AspNetUsersDto();
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (id != 0) //If no Id has been passed, then it is a new Category|
+        {
+            usuario = await servicioUsuario.Obtener(id);
+
+        }
+    }
+
+    public void Volver()
+    {
+        navigationManager.NavigateTo("/usuarios");
+    }
+
+    public void CancelarPlan()
+    {
+        usuario.PlanPremium = false;
+    }
+
+    public void CambiarAPremium()
+    {
+
+    }
+}
+

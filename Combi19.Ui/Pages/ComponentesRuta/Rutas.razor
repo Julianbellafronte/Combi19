@@ -1,0 +1,122 @@
+﻿@page "/rutas"
+@inject IServicioRuta servicioRuta
+@inject IServicioCiudad servicioCiudad
+@inject IServicioProvincia servicioProvincia
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+@attribute [Authorize(Roles = "Admin")]
+<div style="background: linear-gradient(#ffb73f, #ffd23f) " class="top-row px-1 auth border-0 position-relative">
+    <h1 style="color:white">Rutas del sistema</h1>
+</div>
+
+@if (rutas == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="modal-content">
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td colspan="2"><button type="button" class="btn btn-outline-info" @onclick="@(() => navigationManager.NavigateTo($"/añadirRuta"))">Agregar ruta</button></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Origen - Destino</th>
+                    <th>Distancia</th>
+                    <th>Hora salida</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Ruta item in rutas)
+                {
+                    obtenerCiudadProvincia(item.IdCiudad1, item.IdCiudad2);
+                    <tr>
+                        <td><a href="/perfilRuta/@item.Id">@ciudad1 - @ciudad2</a></td>
+                        <td>@item.Km.ToString(".00") km</td>
+                        <td>@item.HsSalida.ToString("HH:mm")</td>
+                        <td>
+                            <button type="button" class="btn btn-outline-info" @onclick="@(() => navigationManager.NavigateTo($"/editarRuta/{item.Id}"))">Editar</button>
+                            <button type="submit" class="btn btn-outline-danger" @onclick="@(() => navigationManager.NavigateTo($"/eliminarRuta/{item.Id}"))">Eliminar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+
+    public IEnumerable<Ruta> rutas { get; set; }
+    private IEnumerable<Ciudad> ciudades = new List<Ciudad>();
+    private IEnumerable<Provincia> provincias = new List<Provincia>();
+    string ciudad1, ciudad2;
+
+
+    public string Message { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            ciudades = await servicioCiudad.ObtenerTodos();
+            provincias = await servicioProvincia.ObtenerTodos();
+            rutas = await servicioRuta.ObtenerTodos();
+        }
+        catch (Exception ex)
+        {
+            Message = "Algo salio mal... " + ex.Message;
+        }
+    }
+
+    protected void obtenerCiudadProvincia(int id1, int id2)
+    {
+        foreach (Ciudad ciudad in ciudades)
+        {
+            if (ciudad.Id == id1)
+            {
+                ciudad1 = ciudad.Nombre;
+                foreach (Provincia provincia in provincias)
+                {
+                    if (provincia.Id == ciudad.IdProvincia)
+                    {
+                        ciudad1 += ", " + provincia.Nombre;
+                        break;
+                    }
+                }
+            }
+        }
+        foreach (Ciudad ciudad in ciudades)
+        {
+            if (ciudad.Id == id2)
+            {
+                ciudad2 = ciudad.Nombre;
+                foreach (Provincia provincia in provincias)
+                {
+                    if (provincia.Id == ciudad.IdProvincia)
+                    {
+                        ciudad2 += ", " + provincia.Nombre;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+}
+
+
+

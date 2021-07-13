@@ -1,0 +1,46 @@
+﻿@inject IServicioViaje servicioViaje
+@inject IServicioRuta servicioRuta 
+@inject IServicioCiudad servicioCiudad
+@inject IServicioProvincia servicioProvincia
+
+<p>
+    <b>
+      @ciudad1.Nombre, @provincia1.Nombre - @ciudad2.Nombre, @provincia2.Nombre
+    </b>
+
+</p>
+
+@code {
+        [Parameter] public int IdViaje { get; set; }
+
+        Viaje viaje = new Viaje();
+        Ruta ruta = new Ruta();
+        Ciudad ciudad1 = new Ciudad();
+        Ciudad ciudad2 = new Ciudad();
+        Provincia provincia1 = new Provincia();
+        Provincia provincia2 = new Provincia();
+        IEnumerable<Viaje> viajes = new List<Viaje>();
+        string Message;
+
+    protected async override Task OnInitializedAsync()
+    {
+        viajes = await servicioViaje.ObtenerTodos();
+        try
+        {
+            if (IdViaje > 0) //If no Id has been passed, then it is a new Category
+            {
+                viaje = await servicioViaje.Obtener(IdViaje);
+                ruta = await servicioRuta.Obtener(viaje.IdRuta);
+                ciudad1 = await servicioCiudad.Obtener(ruta.IdCiudad1);
+                ciudad2 = await servicioCiudad.Obtener(ruta.IdCiudad2);
+                provincia1 = await servicioCiudad.ObtenerProvincia(ciudad1.IdProvincia);
+                provincia2 = await servicioCiudad.ObtenerProvincia(ciudad2.IdProvincia);
+
+            }
+        }
+            catch
+            {
+
+            }
+    }
+}

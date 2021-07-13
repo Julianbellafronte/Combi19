@@ -1,0 +1,88 @@
+﻿@inject NavigationManager navigationManager
+    <div tabindex="-1" style="display:block" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1>Datos de pasaje @(Pos+1)</h1>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="@Pasajes[Pos]" OnValidSubmit="Guardar">
+                        <ValidationSummary />
+                        <table class="table">
+                            <tr>
+                                <td>Nombre</td>
+                                <td><input type="text" required @bind="Pasajes[Pos].Nombre" /></td>
+                                <td colspan="2"> <ValidationMessage For="@( () => Pasajes[Pos].Nombre)" /></td>
+                            </tr>
+
+                            <tr>
+                                <td>Apellido</td>
+                                <td><input type="text" required @bind="Pasajes[Pos].Apellido" /></td>
+                                <td colspan="2"> <ValidationMessage For="@( () => Pasajes[Pos].Apellido)" /></td>
+                            </tr>
+
+                            <tr>
+                                <td>Dni</td>
+                                <td><input type="number" required @bind="@Pasajes[Pos].Dni" /></td>
+                                <td colspan="2"> <ValidationMessage For="@(() =>Pasajes[Pos].Dni)" /></td>
+                            </tr>
+                            @if (!confirmo)
+                            {
+                                <tr>
+                                    <td colspan="2" style="text-align:center">
+                                        <button type="submit" class="btn btn-outline-primary" value="Guardar" >Confirmar</button>
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="2" style="text-align:center">
+                                        <button type="button" class="btn btn-outline-danger" value="Cancelar" @onclick="@(() => Cancelar())">Cancelar</button>
+                                    </td>
+                                </tr>
+                            }
+                        </table>
+                        @if (mostrar)
+                        {
+                            <div class="alert alert-success alert-dismissible" role="alert">
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close" @onclick="@( () => Cerrar())"><span aria-hidden="true">&times;</span></button>
+                                @mensaje
+                            </div>
+                        }
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+@code {
+    [Parameter] public List<int> cantConfirmar { get; set; }
+    [Parameter] public int Pos { get; set; }
+    [Parameter] public int CantidadPasajes { get; set; }
+    [Parameter] public List<Pasaje> Pasajes{ get; set; }
+    string mensaje = "";
+    bool mostrar = false;
+    bool confirmo = false;
+
+    public void Guardar()
+    {
+        mostrar = true;
+        confirmo = true;
+        cantConfirmar.Remove(1);
+
+        mensaje = "Se han actualizado los datos correctamente.";
+    }
+    public void Cerrar()
+    {
+        mostrar = false;
+
+    }
+    public void Cancelar()
+    {
+        mostrar = false;
+        confirmo = false;
+        cantConfirmar.Add(1);
+    }
+}

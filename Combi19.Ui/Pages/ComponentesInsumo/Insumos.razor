@@ -1,0 +1,67 @@
+﻿@page "/insumos"
+@inject IServicioInsumo servicioInsumo
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+@attribute [Authorize(Roles = "Admin")]
+<div style="background: linear-gradient(#ffb73f, #ffd23f) " class="top-row px-1 auth border-0 position-relative">
+    <h1 style="color:white">Insumos del sistema</h1>
+</div>
+
+@if (insumos == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="modal-content">
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td colspan="2"><button type="button" class="btn btn-outline-info" @onclick="@(() => navigationManager.NavigateTo($"/añadirInsumo"))">Agregar insumo</button></td>
+                </tr>
+            </tbody>
+
+        </table>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var insumo in insumos)
+                {
+                    <tr>
+                        <td><a href="/perfilInsumo/@insumo.Id"> @insumo.Nombre @insumo.Descripcion</a></td>
+                        <td>
+                            <button type="button" class="btn btn-outline-info" @onclick="@(() => navigationManager.NavigateTo($"/editarInsumo/{insumo.Id}"))">Editar</button>
+                            <button type="submit" class="btn btn-outline-danger" @onclick="@(() => navigationManager.NavigateTo($"/eliminarInsumo/{insumo.Id}"))">Eliminar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+
+    public IEnumerable<Insumo> insumos { get; set; }
+    public string Message { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            insumos = await servicioInsumo.ObtenerTodos();
+        }
+        catch (Exception ex)
+        {
+            Message = "Algo salio mal... " + ex.Message;
+        }
+    }
+}
+

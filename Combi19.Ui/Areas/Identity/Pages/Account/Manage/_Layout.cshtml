@@ -1,0 +1,24 @@
+﻿@{
+    if (ViewData.TryGetValue("ParentLayout", out var parentLayout))
+    {
+        Layout = (string)parentLayout;
+    }
+    else
+    {
+        Layout = "/Areas/Identity/Pages/_Layout.cshtml";
+    }
+}
+
+<div style="text-align:center">
+    <h4>Cambia tu contraseña</h4>
+    <hr/>
+    <div style="justify-content:center;" class="row">
+        <div class="col-md-5" >
+            @RenderBody()
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @RenderSection("Scripts", required: false)
+}

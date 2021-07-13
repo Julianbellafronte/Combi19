@@ -1,0 +1,76 @@
+﻿<AuthorizeView Roles="Admin">
+    <Authorized>
+        <div class="icono">
+            <a href="/">
+                <img src="/logo_blanco.png" width="80" />
+            </a>
+        </div>
+        <form style="margin:5px" method="get" action="Identity/Account/Manage/ChangePassword">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Cambia tu contraseña</button>
+        </form>
+        <form style="margin:5px" method="post" action="Identity/Account/LogOut">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Cerrar sesion</button>
+        </form>
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="Normal">
+    <Authorized>
+        <div class="icono">
+            <a href="/">
+                <img src="/logo_blanco.png" width="80" />
+            </a>
+        </div>
+        <div class="acomodar">
+            <Combi19.Ui.Pages.ComponenteCompra.BuscarViaje></Combi19.Ui.Pages.ComponenteCompra.BuscarViaje>
+        </div>
+        <form style="margin:5px" method="get" action="datosUsuario">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Mi cuenta</button>
+        </form>
+        <form style="margin:5px" method="get" action="Identity/Account/Manage/ChangePassword">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Cambia tu contraseña</button>
+        </form>
+        <form style="margin:5px" method="post" action="Identity/Account/LogOut">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473 ">Cerrar sesion</button>
+        </form>
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="Chofer">
+    <Authorized>
+        <div class="icono">
+            <a href="/">
+                <img src="/logo_blanco.png" width="80" />
+            </a>
+        </div>
+        <form style="margin:5px" method="get" action="datosChofer">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Mi cuenta</button>
+        </form>
+        <form style="margin:5px" method="get" action="Identity/Account/Manage/ChangePassword">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Cambia tu contraseña</button>
+        </form>
+        <form style="margin:5px" method="post" action="Identity/Account/LogOut">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473 ">Cerrar sesion</button>
+        </form>
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView>
+    <NotAuthorized>
+        <div class="icono">
+            <a href="/">
+                <img src="/logo_blanco.png" width="80" />
+            </a>
+        </div>
+        <form style="margin:5px" method="get" action="Identity/Account/Register">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Registrar</button>
+        </form>
+        <form style="margin:5px" method="get" action="Identity/Account/Login">
+            <button type="submit" class="btn btn-primary border-0" style="background-color: #005473">Iniciar sesion</button>
+        </form>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code{
+    
+}

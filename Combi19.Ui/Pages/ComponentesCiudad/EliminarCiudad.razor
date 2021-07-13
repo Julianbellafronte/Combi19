@@ -1,0 +1,91 @@
+﻿@page "/eliminarCiudad/{id:int}"
+@inject IServicioCiudad servicioCiudad
+@inject IServicioProvincia servicioProvincia
+@inject IServicioRuta servicioRuta
+@inject NavigationManager navigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+<div tabindex="-1" style="display:block" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Datos de la Ciudad</h1>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@ciudad" OnValidSubmit="Eliminar">
+                    <DataAnnotationsValidator />
+                    <table class="table">
+                        <tr>
+                            <td>Nombre</td>
+                            <td>@ciudad.Nombre, @provincia.Nombre</td>
+                        </tr>
+                        @if (!tieneRuta())
+                        {
+                            <tr>
+                                <td colspan="2" style="text-align:center">
+                                    <button type="submit" class="btn btn-outline-danger" value="Eliminar">Eliminar</button>
+                                    <button type="button" class="btn btn-outline-secondary" @onclick="Cancelar">Cancelar</button>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="2" style="text-align:center">
+                                    <p style="color:red">No se puede eliminar la ciudad. Esta asignada a una Ruta.</p>
+                                    <button type="button" class="btn btn-outline-dark" @onclick="@( ()=> navigationManager.NavigateTo("/ciudades"))">Volver</button>
+                                </td>
+                            </tr>
+                        }
+                    </table>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public int id { get; set; }
+
+    Ciudad ciudad = new Ciudad();
+    IEnumerable<Ruta> rutas = new List<Ruta>();
+    Provincia provincia = new Provincia();
+    protected async override Task OnInitializedAsync()
+    {
+        if (id > 0)
+        {
+            ciudad = await servicioCiudad.Obtener(id);
+            provincia = await servicioProvincia.Obtener(ciudad.IdProvincia);
+            rutas = await servicioRuta.ObtenerTodos();
+        }
+
+    }
+
+    protected async Task Eliminar()
+    {
+        await servicioCiudad.Eliminar(id);
+
+        navigationManager.NavigateTo("/ciudades");
+    }
+    public void Cancelar()
+    {
+        navigationManager.NavigateTo("/ciudades");
+    }
+
+    protected bool tieneRuta()
+    {
+        foreach (Ruta item in rutas)
+        {
+            if (item.IdCiudad1 == ciudad.Id || item.IdCiudad2 == ciudad.Id)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+
+

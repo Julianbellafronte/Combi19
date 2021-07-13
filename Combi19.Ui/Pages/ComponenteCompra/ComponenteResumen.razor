@@ -1,0 +1,88 @@
+﻿<div tabindex="-1" style="display:block" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Resumen</h1>
+            </div>
+            <div>
+                <h3>Pasajes:</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (Pasaje item in Resumen.PasajesInfo)
+                        {
+                            <tr>
+                                <td>@item.Nombre</td>
+                                <td>@item.Apellido</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <h3>Insumos:</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Precio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (Insumo item in Resumen.InsumosSeleccionados)
+                        {
+                            <tr>
+                                <td>@item.Nombre</td>
+                                <td>@item.Precio</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <p>Total pasajes: $@PrecioPasaje x @Resumen.PasajesInfo.Count = @(PrecioPasaje*Resumen.PasajesInfo.Count)</p>
+                <p>Total insumos: @calcularInsumos()</p>
+                <p>Monto final: $@montoFinal()</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Resumen Resumen { get; set; }
+    [Parameter] public double PrecioPasaje { get; set; }
+
+    double montoFinalInsumos = 0;
+    double montoPasajes = 0;
+
+    protected string calcularInsumos()
+    {
+        string montoInsumos = "";
+        for (int i = 0; i < Resumen.InsumosSeleccionados.Count; i++)
+        {
+            if (i != (Resumen.InsumosSeleccionados.Count - 1))
+            {
+                montoInsumos += "$" + Resumen.InsumosSeleccionados[i].Precio + " + ";
+            }
+            else
+            {
+                montoInsumos += "$" + Resumen.InsumosSeleccionados[i].Precio;
+            }
+            montoFinalInsumos += Resumen.InsumosSeleccionados[i].Precio;
+        }
+        return montoInsumos;
+    }
+
+    protected double montoFinal()
+    {
+        montoPasajes = PrecioPasaje * Resumen.PasajesInfo.Count;
+
+        return (montoPasajes + montoFinalInsumos);
+    }
+
+}

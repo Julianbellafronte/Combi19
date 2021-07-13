@@ -1,0 +1,50 @@
+﻿@inherits LayoutComponentBase
+
+    <div class="contenedor" >
+        <div class="page">
+            <div class="main">
+                <header>
+                    <div style="background: linear-gradient(#f86f54, #fc9549)" class="top-row px-1 auth border-0 position-relative ">
+                        <LoginDisplay />
+                    </div>
+                    <div style="background: linear-gradient(#fc9549,#ffb73f); z-index: 0 " class="top-row px-1 auth border-0 position-relative">
+                        <div style="background: linear-gradient(#fc9549,#ffb73f); position: absolute; left: 200px " class="top-row px-1 border-0">
+                            <LoginDisplay2 />
+                        </div>
+                    </div>
+                </header>
+                <div class="content">
+                    @Body
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-12 col-md-6 text-left">
+                    <h6 class="text-muted lead">CONTACTO:</h6>
+                    <h6 class="text-muted">
+                        Calle 50 &, Av. 120<br>
+                        La Plata, Provincia de Buenos Aires<br>
+                    </h6>
+                </div>
+
+                <div class="col-xs-12 col-md-6 text-right">
+                    <h6 class="text-muted lead">ENCUENTRANOS EN LAS REDES</h6>
+                    <div class="redes-footer">
+                        <a href="https://www.facebook.com/julian.bellafronte"><img class="redes" src="facebook.png"></a>
+                        <a href="https://twitter.com/"><img class="redes" src="twitter.png"></a>
+                        <a href="https://www.youtube.com/"><img class="redes" src="youtube.png"></a>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+
+                <div class="col-md-12 text-right">
+                    <p class="text-muted small"><br> Todos los derechos reservados.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
